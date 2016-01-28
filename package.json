@@ -15,7 +15,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/phosphorjs/phosphor-commandpalette.git"
+    "url": "https://github.com/phosphorjs/phosphor-commandpalette.git"
   },
   "files": [
     "lib/*.css",
@@ -42,7 +42,7 @@
     "rimraf": "^2.5.1",
     "style-loader": "^0.13.0",
     "ts-loader": "^0.8.0",
-    "typescript": "^1.7.5",
+    "typescript": "^1.6.2",
     "webpack": "^1.12.12"
   },
   "dependencies": {
