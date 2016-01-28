@@ -560,11 +560,12 @@ class CommandPalette extends Widget {
    * Set the buffer to all registered items.
    */
   private _bufferAllItems(): void {
-    let registrations = Object.keys(this._registry);
     let sections: ICommandPaletteSection[] = [];
     // Group items by category into sections.
-    registrations.forEach(id => {
+    Object.keys(this._registry).forEach(id => {
       let item = this._registry[id];
+      // Only visible command items should be buffered.
+      if (!item.isVisible) return;
       // Discover whether a section with this category already exists.
       let sectionIndex = arrays.findIndex(sections, section => {
         return section.title === item.category;
@@ -589,7 +590,10 @@ class CommandPalette extends Widget {
    */
   private _bufferSearchResults(items: ICommandMatchResult[]): void {
     this._buffer = items.reduce((acc, val, idx) => {
-      let heading = this._registry[val.id].category;
+      let item = this._registry[val.id];
+      // Only visible command items should be buffered.
+      if (!item.isVisible) return;
+      let heading = item.category;
       if (!idx) {
         acc.push({ title: heading, registrations: [val.id] });
         return acc;

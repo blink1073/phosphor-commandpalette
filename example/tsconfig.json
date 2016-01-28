@@ -6,7 +6,7 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "target": "ES5",
-    "outDir": "../lib"
+    "outDir": "./build"
   },
   "files": [
     "index.ts"

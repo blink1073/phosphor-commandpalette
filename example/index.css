@@ -1,0 +1,113 @@
+/*-----------------------------------------------------------------------------
+| Copyright (c) 2014-2016, PhosphorJS Contributors
+|
+| Distributed under the terms of the BSD 3-Clause License.
+|
+| The full license is in the file LICENSE, distributed with this software.
+|----------------------------------------------------------------------------*/
+body {
+  background: #FFFFFF;
+  font-family: Helvetica;
+  margin: 0;
+  padding: 0;
+}
+
+
+#main {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  right: 10px;
+  bottom: 10px;
+  padding: 8px;
+}
+
+#output {
+  background: #7FDBFF;
+  height: 60px;
+  font-size: 25px;
+  font-weight: bold;
+  line-height: 60px;
+  text-align: center;
+}
+
+.p-CommandPalette {
+  background: #DDDDDD;
+  border: 1px solid #CCCCCC;
+  padding: 4px 4px 0px 4px;
+}
+
+
+.p-CommandPalette-header {
+  color: #757575;
+  font-size: 11px;
+  font-weight: 500;
+  margin-top: 12px;
+}
+
+
+.p-CommandPalette-header hr {
+  height: 1px;
+  border-width: 0;
+  background-color: #E0E0E0;
+}
+
+
+.p-CommandPalette-search {
+  margin-bottom: 4px;
+}
+
+
+.p-CommandPalette-inputWrapper {
+  border: 1px solid #E0E0E0;
+  padding: 4px;
+}
+
+
+.p-CommandPalette-search input {
+  border: 1px solid #E0E0E0;
+  border-radius: 20px;
+  height: 20px;
+  outline: none;
+  width: calc(100% - 20px);
+  padding: 2px 10px;
+}
+
+
+.p-CommandPalette-command {
+  color: #757575;
+  font-weight: 500;
+  font-size: 13px;
+  padding: 3px 0 3px 2px;
+}
+
+.p-CommandPalette-title {
+  padding-right: 5px;
+}
+
+.p-CommandPalette-command.p-mod-disabled,
+.p-CommandPalette-command.p-mod-disabled .p-CommandPalette-caption {
+  color: #D5D5D5;
+}
+
+.p-CommandPalette-caption {
+  color: #9E9E9E;
+  font-weight: 400;
+  font-size: 10px;
+  padding-right: 5px;
+}
+
+.p-CommandPalette-shortcut {
+  padding-right: 5px;
+}
+
+.p-CommandPalette-shortcut:empty {
+  padding-right: 0;
+}
+
+.p-CommandPalette-command.p-mod-active,
+.p-CommandPalette-command.p-mod-active .p-CommandPalette-caption,
+.p-CommandPalette-command.p-mod-active .p-CommandPalette-shortcut {
+  background: #39CCCC;
+  color: #FFFFFF;
+}
