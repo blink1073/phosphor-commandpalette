@@ -1,0 +1,57 @@
+{
+  "name": "phosphor-commandpalette",
+  "version": "0.0.1",
+  "description": "A Phosphor widget which displays a searchable collection of commands.",
+  "main": "lib/index.js",
+  "typings": "lib/index.d.ts",
+  "scripts": {
+    "clean": "rimraf lib",
+    "clean:example": "rimraf example/build && rimraf example/node_modules/phosphor-commandpalette",
+    "build:example": "cd example && npm install && webpack --config ./webpack.conf.js",
+    "build:src": "tsc --project src",
+    "build:css": "node scripts/copycss.js",
+    "build": "npm run build:src && npm run build:css",
+    "postinstall": "npm dedupe"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/phosphorjs/phosphor-commandpalette.git"
+  },
+  "files": [
+    "lib/*.css",
+    "lib/*.d.ts",
+    "lib/*.js"
+  ],
+  "keywords": [
+    "ui",
+    "widget",
+    "command"
+  ],
+  "contributors": [
+    "A. Darian <git@darian.af>",
+    "Dave Willmer <dave.willmer@gmail.com>"
+  ],
+  "license": "BSD-3-Clause",
+  "bugs": {
+    "url": "https://github.com/phosphorjs/phosphor-commandpalette/issues"
+  },
+  "homepage": "https://github.com/phosphorjs/phosphor-commandpalette#readme",
+  "devDependencies": {
+    "css-loader": "^0.23.1",
+    "fs-extra": "^0.26.5",
+    "rimraf": "^2.5.1",
+    "style-loader": "^0.13.0",
+    "ts-loader": "^0.8.0",
+    "typescript": "^1.6.2",
+    "webpack": "^1.12.12"
+  },
+  "dependencies": {
+    "fuzzysearch-js": "^0.2.0",
+    "phosphor-arrays": "^1.0.6",
+    "phosphor-command": "^0.8.0",
+    "phosphor-disposable": "^1.0.5",
+    "phosphor-messaging": "^1.0.6",
+    "phosphor-signaling": "^1.2.0",
+    "phosphor-widget": "^1.0.0-rc.1"
+  }
+}
