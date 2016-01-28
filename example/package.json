@@ -1,0 +1,10 @@
+{
+  "private": true,
+  "name": "phosphor-commandpalette-example",
+  "dependencies": {
+    "phosphor-commandpalette": "file:.."
+  },
+  "scripts": {
+    "postinstall": "npm dedupe"
+  }
+}
