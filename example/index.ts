@@ -92,3 +92,4 @@ function main() {
 }
 
 window.onload = main;
+window.onresize = () => { outer.update(); };
