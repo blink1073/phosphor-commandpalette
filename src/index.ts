@@ -351,6 +351,7 @@ class CommandPalette extends Widget {
    * Dispose of the resources held by the command palette.
    */
   dispose(): void {
+    Object.keys(this._registry).forEach(id => { clearPropertyData(id); });
     this._buffer.length = 0;
     this._registry = null;
     super.dispose();
