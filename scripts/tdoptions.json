@@ -1,0 +1,12 @@
+{
+  "target": "ES5",
+  "module": "commonjs",
+  "moduleResolution": "node",
+  "excludeNotExported": true,
+  "mode": "file",
+  "out": "docs/api",
+  "src": [
+    "src/index.ts",
+    "typings/fuzzysearch-js/fuzzysearch-js.d.ts"
+  ]
+}
