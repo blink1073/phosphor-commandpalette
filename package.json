@@ -12,7 +12,10 @@
     "build:css": "node scripts/copycss.js",
     "build": "npm run build:src && npm run build:css",
     "postinstall": "npm dedupe",
-    "prepublish": "npm run build"
+    "prepublish": "npm run build",
+    "docs": "rimraf docs/api && typedoc --options scripts/tdoptions.json",
+    "test": "echo \"No tests specified for commandpalette\" && exit 1",
+    "postinstall": "npm dedupe"
   },
   "repository": {
     "type": "git",
@@ -43,6 +46,7 @@
     "rimraf": "^2.5.1",
     "style-loader": "^0.13.0",
     "ts-loader": "^0.8.0",
+    "typedoc": "^0.3.12",
     "typescript": "^1.6.2",
     "webpack": "^1.12.12"
   },
