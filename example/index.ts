@@ -51,7 +51,8 @@ const p2Commands = [
   createCommand('Germanic languages', 'Icelandic', ''),
   createCommand('Germanic languages', 'Norwegian', ''),
   createCommand('Germanic languages', 'Dutch', ''),
-  createCommand('Isolate languages', 'Finnish', '')
+  createCommand('Language isolates', 'Basque', ''),
+  createCommand('Language isolates', 'Korean', '')
 ];
 
 var timeout: number;

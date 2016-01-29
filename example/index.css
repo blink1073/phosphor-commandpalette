@@ -38,6 +38,11 @@ body {
 }
 
 
+.p-CommandPalette-content {
+  padding: 0 8px;
+}
+
+
 .p-CommandPalette-header {
   color: #757575;
   font-size: 11px;
@@ -49,7 +54,7 @@ body {
 .p-CommandPalette-header hr {
   height: 1px;
   border-width: 0;
-  background-color: #E0E0E0;
+  background-color: #BBBBBB;
 }
 
 
@@ -78,7 +83,7 @@ body {
   color: #757575;
   font-weight: 500;
   font-size: 13px;
-  padding: 3px 0 3px 2px;
+  padding: 5px;
 }
 
 .p-CommandPalette-title {
