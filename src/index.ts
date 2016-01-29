@@ -14,16 +14,12 @@ import {
 } from 'phosphor-command';
 
 import {
-  IDisposable, DisposableDelegate
-} from 'phosphor-disposable';
-
-import {
   Message
 } from 'phosphor-messaging';
 
 import {
-  ISignal, Signal
-} from 'phosphor-signaling';
+  Property, clearPropertyData
+} from 'phosphor-properties';
 
 import {
   Widget
@@ -161,7 +157,6 @@ const enum ScrollDirection {
   Down
 }
 
-
 /**
  * Test to see if a child node needs to be scrolled to within its parent node.
  *
@@ -198,6 +193,14 @@ interface ICommandPaletteSection {
  */
 export
 class CommandPalette extends Widget {
+  /**
+   * A property that holds the registration ID for each `CommandItem`.
+   */
+  static idProperty = new Property<CommandItem, string>({
+    name: 'id',
+    value: ''
+  });
+
   /**
    * Create the DOM node for a command palette.
    *
@@ -253,13 +256,14 @@ class CommandPalette extends Widget {
    * #### Notes
    * This method may be reimplemented to create custom items.
    */
-  static createItemNode(id: string, item: CommandItem): HTMLElement {
+  static createItemNode(item: CommandItem): HTMLElement {
     let node = document.createElement('li');
     let top = document.createElement('div');
     let bottom = document.createElement('div');
     let title = document.createElement('span');
     let shortcut = document.createElement('span');
     let caption = document.createElement('span');
+    let id = this.idProperty.get(item);
     // Set the styles for each element.
     node.className = COMMAND_CLASS;
     if (!item.isEnabled) node.classList.add(DISABLED_CLASS);
@@ -298,11 +302,11 @@ class CommandPalette extends Widget {
    * #### Notes
    * This method may be reimplemented to create custom sections.
    */
-  static createSectionFragment(title: string, items: { id: string, command: CommandItem }[]): DocumentFragment {
+  static createSectionFragment(title: string, items: CommandItem[]): DocumentFragment {
     let fragment = document.createDocumentFragment();
     fragment.appendChild(this.createHeaderNode(title));
     items.forEach(item => {
-      fragment.appendChild(this.createItemNode(item.id, item.command));
+      fragment.appendChild(this.createItemNode(item));
     });
     return fragment;
   }
@@ -356,24 +360,20 @@ class CommandPalette extends Widget {
    * Add new command items to the palette.
    *
    * @param commands - An array of `CommandItem` instances.
-   *
-   * @returns An `IDisposable` to remove the added commands from the palette.
    */
-  add(commands: CommandItem[]): IDisposable {
+  add(commands: CommandItem[]): void {
     let registrations: string[] = [];
+    let constructor = this.constructor as typeof CommandPalette;
     commands.forEach(item => {
       let id = `palette-${++registrationSeed}`;
+      // Associate the ID property.
+      constructor.idProperty.set(item, id);
       // Add the item to the private registry.
       this._registry[id] = item;
       // Add the item to the list of registrations to dispose later.
       registrations.push(id);
     });
     this._bufferAllItems();
-    return new DisposableDelegate(() => {
-      registrations.forEach(id => { delete this._registry[id]; });
-      this._bufferAllItems();
-    });
-
   }
 
   /**
@@ -401,6 +401,22 @@ class CommandPalette extends Widget {
       this._evtMouseLeave(event as MouseEvent);
       break;
     }
+  }
+
+  /**
+   * Remove command items from the palette.
+   *
+   * @param commands - An array of `CommandItem` instances.
+   */
+  remove(commands: CommandItem[]): void {
+    let constructor = this.constructor as typeof CommandPalette;
+    commands.forEach(item => {
+      let id = constructor.idProperty.get(item);
+      if (!id) return;
+      delete this._registry[id];
+      clearPropertyData(item);
+    });
+    this._bufferAllItems();
   }
 
   /**
@@ -711,55 +727,14 @@ class CommandPalette extends Widget {
   }
 
   /**
-   * A handler for command registry removals.
-   *
-   * @param sender - The command registry instance that signaled a change.
-   *
-   * @param ids - The command IDs that were removed.
-   */
-  // TODO
-  // private _onCommandsRemoved(sender: ICommandRegistry, ids: string[]): void {
-  //   let commands = ids.reduce((acc, val) => {
-  //     acc[val] = null;
-  //     return acc;
-  //   }, Object.create(null) as { [id: string]: void });
-  //   let staleRegistry = Object.keys(this._registry).some(id => {
-  //     return this._registry[id].command in commands;
-  //   });
-  //   if (staleRegistry) this.update();
-  // }
-
-  /**
-   * Remove a registered item from the registry and from the sections.
-   *
-   * @param id - The palette ID of the item being removed.
-   *
-   * @param deregister - A flag to delete the internal registration of the item.
-   */
-  // private _removeItem(id: string, deregister?: boolean): void {
-  //   for (let section of this._sections) {
-  //     for (let registered of section.registrations) {
-  //       if (id === registered) {
-  //         arrays.remove(section.registrations, id);
-  //         if (deregister) delete this._registry[id];
-  //         return;
-  //       }
-  //     }
-  //   }
-  // }
-
-  /**
    * Render a section and its commands.
    *
    * @param section - The palette section being rendered.
    */
   private _renderSection(section: ICommandPaletteSection): void {
     let constructor = this.constructor as typeof CommandPalette;
-    let commands = section.registrations.map(id => {
-      return { id: id, command: this._registry[id] };
-    });
-
-    let fragment = constructor.createSectionFragment(section.title, commands);
+    let items = section.registrations.map(id => this._registry[id]);
+    let fragment = constructor.createSectionFragment(section.title, items);
     this.contentNode.appendChild(fragment);
   }
 
