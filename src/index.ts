@@ -664,8 +664,12 @@ class CommandPalette extends Widget {
       let oldValue = input.value;
       requestAnimationFrame(() => {
         let newValue = input.value;
+        // If the search value has not changed, do nothing.
+        if (newValue === oldValue) return;
+        // If the search value has changed to empty, render everything.
         if (newValue === '') return this._bufferAllItems();
-        if (newValue !== oldValue) return this.search(newValue);
+        // Otherwise, search for the new value.
+        this.search(newValue);
       });
       return;
     }
