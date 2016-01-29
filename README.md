@@ -40,6 +40,23 @@ npm run build
 ```
 
 
+Run Tests
+---------
+
+Follow the source build instructions first.
+
+```bash
+# run tests in Firefox
+npm test
+
+# run tests in Chrome
+npm run test:chrome
+
+# run tests in IE
+npm run test:ie
+```
+
+
 Build Docs
 ----------
 
