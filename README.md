@@ -63,7 +63,7 @@ npm install
 npm run build
 ```
 
-Start a web server in the `example` folder and navigate to the served URL.
+Navigate to `example/index.html`.
 
 
 Supported Runtimes
