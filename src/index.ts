@@ -102,7 +102,6 @@ const SHORTCUT_CLASS = 'p-CommandPalette-shortcut';
  */
 const TITLE_CLASS = 'p-CommandPalette-title';
 
-const FOO = 'bar';
 /**
  * The `keyCode` value for the enter key.
  */
