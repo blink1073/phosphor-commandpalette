@@ -22,10 +22,6 @@ import {
 } from 'phosphor-messaging';
 
 import {
-  ISignal, Signal
-} from 'phosphor-signaling';
-
-import {
   Widget
 } from 'phosphor-widget';
 
@@ -416,10 +412,7 @@ class CommandPalette extends Widget {
       acc.push({ id, title, caption });
       return acc;
     }, [] as ICommandSearchItem[]);
-    matcher.search(query, searchableItems)
-      .then((results: ICommandMatchResult[]) => {
-        this._bufferSearchResults(results);
-      });
+    this._bufferSearchResults(matcher.search(query, searchableItems));
   }
 
   /**

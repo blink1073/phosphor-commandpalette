@@ -81,7 +81,7 @@ abstract class CommandMatcher {
    *
    * This abstract method must be implemented by a subclass.
    */
-  abstract search(query: string, commands: ICommandSearchItem[]): Promise<ICommandMatchResult[]>;
+  abstract search(query: string, commands: ICommandSearchItem[]): ICommandMatchResult[];
 }
 
 
@@ -122,15 +122,14 @@ class FuzzyMatcher extends CommandMatcher {
    * @param commands - The list of ICommandSearchItem-conforming objects to
    *    search over.
    *
-   * @returns - A Promise resolving to a list of ICommandMatchResult
-   *    objects.
+   * @returns - a list of ICommandMatchResult objects.
    *
    * #### Notes
    * This method with the private _processResults encapsulates the
    * external fuzzy matching library. No details of the library used
    * should leak outside of this public API.
    */
-  search(query: string, commands: ICommandSearchItem[]): Promise<ICommandMatchResult[]> {
+  search(query: string, commands: ICommandSearchItem[]): ICommandMatchResult[] {
     // Even though captions are optional, FuzzySearch needs them to be defined.
     commands.forEach(item => item.caption = item.caption || '');
     let primarySearch = new FuzzySearch(commands, {
@@ -153,26 +152,20 @@ class FuzzyMatcher extends CommandMatcher {
 
     let primaryResult = this._processResults(primarySearch.search(query));
     let secondaryResult = secondarySearch.search(query);
-    let combined = this._mergeResults(primaryResult, secondaryResult);
-    return Promise.resolve(combined);
+    return this._mergeResults(primaryResult, secondaryResult);
   }
 
   private _processResults(results: any[]): ICommandMatchResult[] {
-    let retval: ICommandMatchResult[] = [];
-    if (!results) {
-      return retval;
-    }
-    for (let result of results) {
-      retval.push({ score: result.score, id: result.value.id });
-    }
-    return retval;
+    // Since results can be null, use default operator.
+    return (results || []).map(result => ({
+      score: result.score,
+      id: result.value.id
+    }));
   }
 
   private _mergeResults(primary: ICommandMatchResult[], secondary: any[]): ICommandMatchResult[] {
-    if (!secondary) {
-      return primary;
-    }
-    let primaryIds = primary.map((x) => { return x.id; });
+    if (!secondary) return primary;
+    let primaryIds = primary.map(x => x.id);
     for (let i = 0; i < secondary.length; ++i) {
       let id = secondary[i].value.id;
       let pid = primaryIds.indexOf(id);
