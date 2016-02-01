@@ -7,10 +7,5 @@
     "moduleResolution": "node",
     "target": "ES5",
     "outDir": "../lib"
-  },
-  "files": [
-    "index.ts",
-    "matcher.ts",
-    "../typings/fuzzysearch-js/fuzzysearch-js.d.ts"
-  ]
+  }
 }

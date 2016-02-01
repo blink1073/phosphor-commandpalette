@@ -15,12 +15,19 @@ import {
 } from 'phosphor-command';
 
 import {
- CommandPalette
+ CommandPalette, SimpleSource
 } from 'phosphor-commandpalette';
 
 
 const p1 = new CommandPalette();
 const p2 = new CommandPalette();
+
+const s1 = new SimpleSource();
+const s2 = new SimpleSource();
+
+p1.source = s1;
+p2.source = s2;
+
 const outer = new BoxPanel();
 const output = new BoxPanel();
 const palettes = new BoxPanel();
@@ -74,8 +81,9 @@ function createCommand(category: string, title: string, caption: string): Comman
 
 function main() {
   // Populate left palette commands.
-  p1.add(p1Commands);
-  p2.add(p2Commands);
+  s1.add(p1Commands);
+  s2.add(p2Commands);
+
   // Populate palettes panel.
   BoxPanel.setStretch(p1, 1);
   BoxPanel.setStretch(p2, 1);
@@ -83,6 +91,7 @@ function main() {
   palettes.spacing = 5;
   palettes.addChild(p1);
   palettes.addChild(p2);
+
   // Populate output panel.
   output.id = 'output';
   BoxPanel.setSizeBasis(output, 60);
@@ -91,6 +100,7 @@ function main() {
   outer.spacing = 2;
   outer.addChild(palettes);
   outer.addChild(output);
+
   // Attach main panel to body.
   outer.id = 'main';
   outer.attach(document.body);

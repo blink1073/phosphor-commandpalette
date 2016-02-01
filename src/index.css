@@ -18,46 +18,43 @@
 
 .p-CommandPalette-content {
   flex: 1 1 auto;
-  list-style-type: none;
   margin: 0;
   padding: 0;
   min-height: 0;
   overflow: auto;
+  list-style-type: none;
 }
 
-.p-CommandPalette-header {
+
+.p-CommandPalette-item {
+  display: flex;
+  flex-direction: row;
+}
+
+
+.p-CommandPalette-itemIcon {
+  flex: 0 0 auto;
+}
+
+
+.p-CommandPalette-itemContent {
+  flex: 1 1 auto;
+}
+
+
+.p-CommandPalette-itemText {
   display: block;
-}
-
-.p-CommandPalette-commandTop {
-  display: flex;
-  flex-direction: row;
-}
-
-.p-CommandPalette-commandBottom {
-  display: flex;
-  flex-direction: row;
-}
-
-.p-CommandPalette-title {
-  flex-grow: 1;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
+
 
 .p-CommandPalette-shortcut {
-  flex-grow: 2;
-  text-align: right;
-  white-space: nowrap;
+  float: right;
 }
+
 
 .p-CommandPalette-caption {
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-.p-CommandPalette-caption:empty:before {
-  content: '\00a0';
+  display: block;
 }
