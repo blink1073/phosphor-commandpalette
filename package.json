@@ -4,6 +4,35 @@
   "description": "A Phosphor widget which displays a searchable collection of commands.",
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
+  "dependencies": {
+    "phosphor-arrays": "^1.0.6",
+    "phosphor-command": "^0.9.0",
+    "phosphor-messaging": "^1.0.6",
+    "phosphor-properties": "^2.0.0",
+    "phosphor-signaling": "^1.2.0",
+    "phosphor-widget": "^1.0.0-rc.1"
+  },
+  "devDependencies": {
+    "css-loader": "^0.23.1",
+    "expect.js": "^0.3.1",
+    "fs-extra": "^0.26.5",
+    "istanbul-instrumenter-loader": "^0.1.3",
+    "karma": "^0.13.19",
+    "karma-chrome-launcher": "^0.2.0",
+    "karma-coverage": "^0.5.0",
+    "karma-firefox-launcher": "^0.1.6",
+    "karma-ie-launcher": "^0.2.0",
+    "karma-mocha": "^0.2.0",
+    "karma-mocha-reporter": "^1.1.1",
+    "karma-webpack": "^1.7.0",
+    "mocha": "^2.2.5",
+    "rimraf": "^2.5.1",
+    "style-loader": "^0.13.0",
+    "ts-loader": "^0.8.0",
+    "typedoc": "^0.3.12",
+    "typescript": "^1.6.2",
+    "webpack": "^1.12.12"
+  },
   "scripts": {
     "clean": "rimraf lib",
     "clean:example": "rimraf example/build && rimraf example/node_modules/phosphor-commandpalette",
@@ -32,47 +61,19 @@
     "lib/*.js"
   ],
   "keywords": [
+    "command",
+    "palette",
     "ui",
-    "widget",
-    "command"
+    "widget"
   ],
   "contributors": [
     "A. Darian <git@darian.af>",
-    "Dave Willmer <dave.willmer@gmail.com>"
+    "Dave Willmer <dave.willmer@gmail.com>",
+    "S. Chris Colbert <sccolbert@gmail.com>"
   ],
   "license": "BSD-3-Clause",
   "bugs": {
     "url": "https://github.com/phosphorjs/phosphor-commandpalette/issues"
   },
-  "homepage": "https://github.com/phosphorjs/phosphor-commandpalette#readme",
-  "devDependencies": {
-    "css-loader": "^0.23.1",
-    "expect.js": "^0.3.1",
-    "fs-extra": "^0.26.5",
-    "istanbul-instrumenter-loader": "^0.1.3",
-    "karma": "^0.13.19",
-    "karma-chrome-launcher": "^0.2.0",
-    "karma-coverage": "^0.5.0",
-    "karma-firefox-launcher": "^0.1.6",
-    "karma-ie-launcher": "^0.2.0",
-    "karma-mocha": "^0.2.0",
-    "karma-mocha-reporter": "^1.1.1",
-    "karma-webpack": "^1.7.0",
-    "mocha": "^2.2.5",
-    "rimraf": "^2.5.1",
-    "style-loader": "^0.13.0",
-    "ts-loader": "^0.8.0",
-    "typedoc": "^0.3.12",
-    "typescript": "^1.6.2",
-    "webpack": "^1.12.12"
-  },
-  "dependencies": {
-    "fuzzysearch-js": "^0.2.0",
-    "phosphor-arrays": "^1.0.6",
-    "phosphor-command": "^0.8.0",
-    "phosphor-messaging": "^1.0.6",
-    "phosphor-properties": "^2.0.0",
-    "phosphor-signaling": "^1.2.0",
-    "phosphor-widget": "^1.0.0-rc.1"
-  }
+  "homepage": "https://github.com/phosphorjs/phosphor-commandpalette#readme"
 }
