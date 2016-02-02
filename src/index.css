@@ -41,6 +41,16 @@
   flex: 1 1 auto;
 }
 
+.p-CommandPalette-itemCaption {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.p-CommandPalette-itemCaption:empty:before {
+  content: '\00a0';
+}
+
 
 .p-CommandPalette-itemText {
   display: block;
@@ -52,9 +62,4 @@
 
 .p-CommandPalette-shortcut {
   float: right;
-}
-
-
-.p-CommandPalette-caption {
-  display: block;
 }
