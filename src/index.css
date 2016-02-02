@@ -53,3 +53,8 @@
 .p-CommandPalette-shortcut {
   float: right;
 }
+
+
+.p-CommandPalette-caption {
+  display: block;
+}
