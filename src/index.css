@@ -42,13 +42,6 @@
 }
 
 
-.p-CommandPalette-itemCaption {
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-
 .p-CommandPalette-itemText {
   display: block;
   overflow: hidden;
