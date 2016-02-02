@@ -386,7 +386,7 @@ class CommandPalette extends Widget {
     while (
       !(isCategory = target.hasAttribute('data-category')) &&
       !(isItem = target.hasAttribute('data-index'))) {
-        if (target === this.contentNode) return;
+        if (target === this.node) return;
         target = target.parentElement;
     }
     if (isCategory) {
