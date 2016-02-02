@@ -109,6 +109,50 @@ const ACTIVE_CLASS = 'p-mod-active';
  */
 const QUERY_REGEX = /^(\w*:)?(.*)$/;
 
+/**
+ * The `keyCode` value for the enter key.
+ */
+const ENTER = 13;
+
+/**
+ * The `keyCode` value for the escape key.
+ */
+const ESCAPE = 27;
+
+/**
+ * The `keyCode` value for the up arrow key.
+ */
+const UP_ARROW = 38;
+
+/**
+ * The `keyCode` value for the down arrow key.
+ */
+const DOWN_ARROW = 40;
+
+/**
+ * A map of the special `keyCode` values a command palette uses for navigation.
+ */
+const FN_KEYS: { [key: string]: void } = {
+  [ENTER]: null,
+  [ESCAPE]: null,
+  [UP_ARROW]: null,
+  [DOWN_ARROW]: null
+};
+
+/**
+ * The scroll directions for changing the active command.
+ */
+const enum ScrollDirection {
+  /**
+   * Move the active selection up.
+   */
+  Up,
+  /**
+   * Move the active selection down.
+   */
+  Down
+}
+
 
 /**
  * A widget which displays commands from a command source.
@@ -375,6 +419,104 @@ class CommandPalette extends Widget {
   }
 
   /**
+   * Activate the next command in the given direction.
+   *
+   * @param direction - The scroll direction.
+   */
+  private _activate(direction: ScrollDirection): void {
+    let active = this._findActiveItem();
+    if (!active) {
+      if (direction === ScrollDirection.Down) return this._activateFirst();
+      if (direction === ScrollDirection.Up) return this._activateLast();
+    }
+    let flat = this._buffer.reduce((acc, section, i) => {
+      section.items.forEach((item, j) => {
+        if (item.isEnabled) acc.push(`${i}-${j}`);
+      });
+      return acc;
+    }, [] as string[]);
+    let current = flat.indexOf(active.getAttribute('data-index'));
+    let newActive: number;
+    if (direction === ScrollDirection.Up) {
+      newActive = current > 0 ? current - 1 : flat.length - 1;
+    } else {
+      newActive = current < flat.length - 1 ? current + 1 : 0;
+    }
+    if (newActive === 0) return this._activateFirst();
+    let selector = `[data-index="${flat[newActive]}"]`;
+    let target = this.node.querySelector(selector) as HTMLElement;
+    let scrollIntoView = scrollTest(this.contentNode, target);
+    let alignToTop = direction === ScrollDirection.Up;
+    this._activateNode(target, scrollIntoView, alignToTop);
+  }
+
+  /**
+   * Activate the first item.
+   */
+  private _activateFirst(): void {
+    // Query the DOM for items that are not disabled.
+    let selector = `.${ITEM_CLASS}:not(.${DISABLED_CLASS})`;
+    let nodes = this.node.querySelectorAll(selector);
+    // If the palette contains any enabled items, activate the first one.
+    if (nodes.length) {
+      // Scroll all the way to the top of the content node.
+      this.contentNode.scrollTop = 0;
+      let target = nodes[0] as HTMLElement;
+      // Test if the first enabled item is visible.
+      let scrollIntoView = scrollTest(this.contentNode, target);
+      let alignToTop = true;
+      this._activateNode(target, scrollIntoView, alignToTop);
+    }
+  }
+
+  /**
+   * Activate the last command.
+   */
+  private _activateLast(): void {
+    // Query the DOM for items that are not disabled.
+    let selector = `.${ITEM_CLASS}:not(.${DISABLED_CLASS})`;
+    let nodes = this.node.querySelectorAll(selector);
+    // If the palette contains any enabled items, activate the last one.
+    if (nodes.length) {
+      // Scroll all the way to the bottom of the content node.
+      this.contentNode.scrollTop = this.contentNode.scrollHeight;
+      let target = nodes[nodes.length - 1] as HTMLElement;
+      // Test if the last enabled item is visible.
+      let scrollIntoView = scrollTest(this.contentNode, target);
+      let alignToTop = false;
+      this._activateNode(target, scrollIntoView, alignToTop);
+    }
+  }
+
+  /**
+   * Activate a specific command and optionally scroll it into view.
+   *
+   * @param target - The node that is being activated.
+   *
+   * @param scrollIntoView - A flag indicating whether to scroll to the node.
+   *
+   * @param alignToTop - A flag indicating whether to align scroll to top.
+   */
+  private _activateNode(target: HTMLElement, scrollIntoView?: boolean, alignToTop?: boolean): void {
+    let active = this._findActiveItem();
+    if (target === active) return;
+    if (active) this._deactivate();
+    target.classList.add(ACTIVE_CLASS);
+    if (scrollIntoView) target.scrollIntoView(alignToTop);
+  }
+
+  /**
+   * Deactivate (i.e. deselect) all palette items.
+   */
+  private _deactivate(): void {
+    let selector = `.${ITEM_CLASS}.${ACTIVE_CLASS}`;
+    let nodes = this.node.querySelectorAll(selector);
+    for (let i = 0; i < nodes.length; ++i) {
+      nodes[i].classList.remove(ACTIVE_CLASS);
+    }
+  }
+
+  /**
    * Handle the `'click'` event for the command palette.
    */
   private _evtClick(event: MouseEvent): void {
@@ -404,10 +546,35 @@ class CommandPalette extends Widget {
   }
 
   /**
-   *
+   * Handle the `'keydown'` event for the command palette.
    */
   private _evtKeyDown(event: KeyboardEvent): void {
-
+    let { altKey, ctrlKey, metaKey, keyCode } = event;
+    // Ignore system keyboard shortcuts.
+    if (altKey || ctrlKey || metaKey) return;
+    if (!FN_KEYS.hasOwnProperty(`${keyCode}`)) return;
+    // If escape key is pressed and nothing is active, allow propagation.
+    if (keyCode === ESCAPE) {
+      if (!this._findActiveItem()) return;
+      event.preventDefault();
+      event.stopPropagation();
+      return this._deactivate();
+    }
+    event.preventDefault();
+    event.stopPropagation();
+    if (keyCode === UP_ARROW) return this._activate(ScrollDirection.Up);
+    if (keyCode === DOWN_ARROW) return this._activate(ScrollDirection.Down);
+    if (keyCode === ENTER) {
+      let active = this._findActiveItem();
+      if (!active) return;
+      let indices = active.getAttribute('data-index');
+      let category = parseInt(indices.split('-')[0], 10);
+      let index = parseInt(indices.split('-')[1], 10);
+      let item = this._buffer[category].items[index];
+      if (item.isEnabled) item.execute();
+      this._deactivate();
+      return;
+    }
   }
 
   /**
@@ -415,6 +582,14 @@ class CommandPalette extends Widget {
    */
   private _evtInput(event: Event): void {
     this.update();
+  }
+
+  /**
+   * Find the currently selected item.
+   */
+  private _findActiveItem(): HTMLElement {
+    let selector = `.${ITEM_CLASS}.${ACTIVE_CLASS}`;
+    return this.node.querySelector(selector) as HTMLElement;
   }
 
   /**
@@ -426,4 +601,20 @@ class CommandPalette extends Widget {
 
   private _buffer: ISearchResultSection[];
   private _source: CommandSource = null;
+}
+
+
+/**
+ * Test to see if a child node needs to be scrolled to within its parent node.
+ *
+ * @param parentNode - The element containing the child being checked.
+ *
+ * @param childNode - The child element whose visibility is being checked.
+ *
+ * @returns true if the parent node needs to be scrolled to reveal the child.
+ */
+function scrollTest(parentNode: HTMLElement, childNode: HTMLElement): boolean {
+  let parent = parentNode.getBoundingClientRect();
+  let child = childNode.getBoundingClientRect();
+  return child.top < parent.top || child.top + child.height > parent.bottom;
 }

@@ -95,6 +95,12 @@ body {
 }
 
 
+.p-CommandPalette-item.p-mod-active {
+  color: white;
+  background: #7FDBFF;
+}
+
+
 .p-CommandPalette-item.p-mod-disabled {
   color: #D5D5D5;
 }
