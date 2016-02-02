@@ -20,7 +20,7 @@ import {
 } from 'phosphor-widget';
 
 import {
-  CommandSource
+  CommandSource, ISearchResultSection
 } from './source';
 
 
@@ -140,18 +140,21 @@ class CommandPalette extends Widget {
    *
    * @param title - The palette section title.
    *
+   * @param category - The palette section data-category value.
+   *
    * @returns A new DOM node for a palette section header.
    *
    * #### Notes
    * This method may be reimplemented to create custom headers.
    */
-  static createHeaderNode(title: string): HTMLElement {
+  static createHeaderNode(title: string, category: string): HTMLElement {
     let node = document.createElement('li');
     let text = document.createElement('span');
     let icon = document.createElement('span');
     node.className = HEADER_CLASS;
     text.className = HEADER_TEXT_CLASS;
     icon.className = HEADER_ICON_CLASS;
+    node.setAttribute('data-category', category);
     text.textContent = title;
     node.appendChild(text);
     node.appendChild(icon);
@@ -163,12 +166,14 @@ class CommandPalette extends Widget {
    *
    * @param item - The command item to render.
    *
+   * @param index - The data-index attribute value for the command item.
+   *
    * @returns A new DOM node for a palette section item.
    *
    * #### Notes
    * This method may be reimplemented to create custom items.
    */
-  static createItemNode(item: CommandItem): HTMLElement {
+  static createItemNode(item: CommandItem, index: string): HTMLElement {
     let node = document.createElement('li');
     let content = document.createElement('div');
     let icon = document.createElement('span');
@@ -193,6 +198,7 @@ class CommandPalette extends Widget {
     if (extraIcon) iconClass += ' ' + extraIcon;
     icon.className = iconClass;
 
+    node.setAttribute('data-index', index);
     text.textContent = item.text;
     shortcut.textContent = item.shortcut;
     caption.textContent = item.caption;
@@ -244,6 +250,7 @@ class CommandPalette extends Widget {
       value.changed.connect(this._onSourceChanged);
     }
     this._source = value;
+    this.update();
   }
 
   /**
@@ -342,15 +349,21 @@ class CommandPalette extends Widget {
       return;
     }
 
+    this._buffer = result;
+
     //
     let fragment = document.createDocumentFragment();
     let ctor = this.constructor as typeof CommandPalette;
 
     //
-    for (let { title, items } of result) {
-      fragment.appendChild(ctor.createHeaderNode(title));
-      for (let item of items) {
-        fragment.appendChild(ctor.createItemNode(item));
+    for (let i = 0; i < result.length; ++i) {
+      let section = result[i];
+      let title = section.title;
+      let category = section.category;
+      fragment.appendChild(ctor.createHeaderNode(title, category));
+      for (let j = 0; j < section.items.length; ++j) {
+        let item = section.items[j];
+        fragment.appendChild(ctor.createItemNode(item, `${i}-${j}`));
       }
     }
 
@@ -362,10 +375,32 @@ class CommandPalette extends Widget {
   }
 
   /**
-   *
+   * Handle the `'click'` event for the command palette.
    */
   private _evtClick(event: MouseEvent): void {
-
+    let { altKey, ctrlKey, metaKey, shiftKey } = event;
+    if (event.button !== 0 || altKey || ctrlKey || metaKey || shiftKey) return;
+    event.stopPropagation();
+    event.preventDefault();
+    let target = event.target as HTMLElement;
+    let isCategory: boolean;
+    let isItem: boolean;
+    while (
+      !(isCategory = target.hasAttribute('data-category')) &&
+      !(isItem = target.hasAttribute('data-index'))) {
+        if (target === this.node) return;
+        target = target.parentElement;
+    }
+    if (isCategory) {
+      let category = target.getAttribute('data-category');
+      console.log('category search', category);
+    } else {
+      let indices = target.getAttribute('data-index');
+      let category = parseInt(indices.split('-')[0], 10);
+      let index = parseInt(indices.split('-')[1], 10);
+      let item = this._buffer[category].items[index];
+      if (item.isEnabled) item.execute();
+    }
   }
 
   /**
@@ -389,5 +424,6 @@ class CommandPalette extends Widget {
 
   }
 
+  private _buffer: ISearchResultSection[];
   private _source: CommandSource = null;
 }
