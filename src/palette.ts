@@ -356,14 +356,16 @@ class CommandPalette extends Widget {
     let ctor = this.constructor as typeof CommandPalette;
 
     //
-    result.forEach((section, i) => {
+    for (let i = 0; i < result.length; ++i) {
+      let section = result[i];
       let title = section.title;
       let category = section.category;
       fragment.appendChild(ctor.createHeaderNode(title, category));
-      section.items.forEach((item, j) => {
-        fragment.appendChild(ctor.createItemNode(item, [i, j].join('-')));
-      });
-    });
+      for (let j = 0; j < section.items.length; ++j) {
+        let item = section.items[j];
+        fragment.appendChild(ctor.createItemNode(item, `${i}-${j}`));
+      }
+    }
 
     //
     content.appendChild(fragment);
