@@ -8,6 +8,10 @@
 'use strict';
 
 import {
+  ICommand
+} from 'phosphor-command';
+
+import {
   ISignal, Signal
 } from 'phosphor-signaling';
 
@@ -169,7 +173,7 @@ abstract class AbstractPaletteModel {
    * A subclass should emit this signal when its contents change in
    * a way which may invalidate previously computed search results.
    */
-  get changed(): ISignal<PaletteModel, void> {
+  get changed(): ISignal<AbstractPaletteModel, void> {
     return AbstractPaletteModelPrivate.changedSignal.bind(this);
   }
 }
@@ -183,5 +187,5 @@ namespace AbstractPaletteModelPrivate {
    * A signal emitted when a palette model's search results change.
    */
   export
-  const changedSignal = new Signal<PaletteModel, void>();
+  const changedSignal = new Signal<AbstractPaletteModel, void>();
 }
