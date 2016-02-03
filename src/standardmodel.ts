@@ -313,7 +313,7 @@ class StandardPaletteModel extends AbstractPaletteModel {
 
     query = query.toLowerCase();
 
-    let matches: IMatch[];
+    let matches: IMatch[] = [];
     for (let item of this._items) {
       let text = item.text.toLowerCase();
       let score = StringSearch.sumOfSquares(text, query);
