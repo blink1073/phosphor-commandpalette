@@ -44,14 +44,13 @@ interface IHeaderResult {
   text: string;
 
   /**
-   * A query prefix to further refine the search, or an empty string.
+   * A category to further refine the search, or an empty string.
    *
    * #### Notes
    * If this is provided, the header will be selectable. If the header
-   * is selected, the prefix will be added to the current search query
-   * and a new search will be performed.
+   * is selected, the search will be refined with the given category.
    */
-  queryPrefix: string;
+  category: string;
 
   /**
    * The class name(s) to add to the header node, or an empty string.
@@ -153,9 +152,12 @@ abstract class AbstractPaletteModel {
   /**
    * Search the palette model for matching commands.
    *
-   * @param query - The query text for matching items.
+   * @param query - The query text to match against the model items.
+   *   The query should take the form `(<category>:)?<text>`. If a
+   *   category is specified, the search will be limited to items
+   *   which match the category.
    *
-   * @returns The results of the search as an array of sections.
+   * @returns An array of new search results for the query.
    *
    * #### Notes
    * This abstract method must be implemented by a subclass.
