@@ -415,7 +415,7 @@ class CommandPalette extends Widget {
    * @param direction - The scroll direction.
    */
   private _activate(direction: ScrollDirection): void {
-    let active = this._findActiveItem();
+    let active = this._findActiveNode();
     if (!active) {
       if (direction === ScrollDirection.Down) return this._activateFirst();
       if (direction === ScrollDirection.Up) return this._activateLast();
@@ -483,7 +483,7 @@ class CommandPalette extends Widget {
    * @param alignToTop - A flag indicating whether to align scroll to top.
    */
   private _activateNode(target: HTMLElement, scrollIntoView?: boolean, alignToTop?: boolean): void {
-    let active = this._findActiveItem();
+    let active = this._findActiveNode();
     if (target === active) return;
     if (active) this._deactivate();
     target.classList.add(ACTIVE_CLASS);
@@ -505,29 +505,16 @@ class CommandPalette extends Widget {
    * Handle the `'click'` event for the command palette.
    */
   private _evtClick(event: MouseEvent): void {
-    // let { altKey, ctrlKey, metaKey, shiftKey } = event;
-    // if (event.button !== 0 || altKey || ctrlKey || metaKey || shiftKey) return;
-    // event.stopPropagation();
-    // event.preventDefault();
-    // let target = event.target as HTMLElement;
-    // let isCategory: boolean;
-    // let isItem: boolean;
-    // while (
-    //   !(isCategory = target.hasAttribute('data-category')) &&
-    //   !(isItem = target.hasAttribute('data-index'))) {
-    //     if (target === this.node) return;
-    //     target = target.parentElement;
-    // }
-    // if (isCategory) {
-    //   let category = target.getAttribute('data-category');
-    //   console.log('category search', category);
-    // } else {
-    //   let indices = target.getAttribute('data-index');
-    //   let category = parseInt(indices.split('-')[0], 10);
-    //   let index = parseInt(indices.split('-')[1], 10);
-    //   let item = this._buffer[category].items[index];
-    //   if (item.isEnabled) item.execute();
-    // }
+    let { altKey, ctrlKey, metaKey, shiftKey } = event;
+    if (event.button !== 0 || altKey || ctrlKey || metaKey || shiftKey) return;
+    event.stopPropagation();
+    event.preventDefault();
+    let target = event.target as HTMLElement;
+    while (!target.hasAttribute('data-index')) {
+        if (target === this.node) return;
+        target = target.parentElement;
+    }
+    this._execute(target);
   }
 
   /**
@@ -540,7 +527,7 @@ class CommandPalette extends Widget {
     if (!FN_KEYS.hasOwnProperty(`${keyCode}`)) return;
     // If escape key is pressed and nothing is active, allow propagation.
     if (keyCode === ESCAPE) {
-      if (!this._findActiveItem()) return;
+      if (!this._findActiveNode()) return;
       event.preventDefault();
       event.stopPropagation();
       return this._deactivate();
@@ -550,22 +537,9 @@ class CommandPalette extends Widget {
     if (keyCode === UP_ARROW) return this._activate(ScrollDirection.Up);
     if (keyCode === DOWN_ARROW) return this._activate(ScrollDirection.Down);
     if (keyCode === ENTER) {
-      let active = this._findActiveItem();
+      let active = this._findActiveNode();
       if (!active) return;
-      let { type, value } = this._buffer[parseInt(active.dataset['index'], 10)];
-      switch (type) {
-      case SearchResultType.Header:
-        let query = (value as IHeaderResult).queryPrefix;
-        this.inputNode.value = `${query}:`;
-        break;
-      case SearchResultType.Command:
-        let command = (value as ICommandResult).command;
-        let args = (value as ICommandResult).args;
-        if (command.isEnabled) command.execute(args);
-        break;
-      default:
-        throw new Error('invalid search result type');
-      }
+      this._execute(active);
       this._deactivate();
       return;
     }
@@ -578,10 +552,27 @@ class CommandPalette extends Widget {
     this.update();
   }
 
+  private _execute(target: HTMLElement): void {
+    let { type, value } = this._buffer[parseInt(target.dataset['index'], 10)];
+    switch (type) {
+    case SearchResultType.Header:
+      let query = (value as IHeaderResult).queryPrefix;
+      console.log('category search', query);
+      break;
+    case SearchResultType.Command:
+      let command = (value as ICommandResult).command;
+      let args = (value as ICommandResult).args;
+      if (command.isEnabled) command.execute(args);
+      break;
+    default:
+      throw new Error('invalid search result type');
+    }
+  }
+
   /**
    * Find the currently selected item.
    */
-  private _findActiveItem(): HTMLElement {
+  private _findActiveNode(): HTMLElement {
     let selector = `.${ITEM_CLASS}.${ACTIVE_CLASS}`;
     return this.node.querySelector(selector) as HTMLElement;
   }
