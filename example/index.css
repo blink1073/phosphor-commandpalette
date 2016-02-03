@@ -106,7 +106,8 @@ body {
 }
 
 
-.p-CommandPalette-item:hover {
+.p-CommandPalette-item[data-index]:hover,
+.p-CommandPalette-header[data-index]:hover {
   background: #DDDDDD;
 }
 
