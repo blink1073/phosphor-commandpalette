@@ -179,9 +179,7 @@ class CommandPalette extends Widget {
   /**
    * Create a header node for a command palette.
    *
-   * @param title - The palette section title.
-   *
-   * @param category - The palette section data-category value.
+   * @param data - The palette header item data to render.
    *
    * @returns A new DOM node for a palette section header.
    *
@@ -204,9 +202,7 @@ class CommandPalette extends Widget {
   /**
    * Create an item node for a command palette.
    *
-   * @param item - The command item to render.
-   *
-   * @param index - The data-index attribute value for the command item.
+   * @param data - The palette item data to render.
    *
    * @returns A new DOM node for a palette section item.
    *
@@ -443,7 +439,7 @@ class CommandPalette extends Widget {
    * Activate the first item.
    */
   private _activateFirst(): void {
-    let nodes = this.node.querySelectorAll('[data-index]');
+    let nodes = this.contentNode.querySelectorAll('[data-index]');
     // If the palette contains any enabled items, activate the first one.
     if (nodes.length) {
       // Scroll all the way to the top of the content node.
@@ -460,7 +456,7 @@ class CommandPalette extends Widget {
    * Activate the last command.
    */
   private _activateLast(): void {
-    let nodes = this.node.querySelectorAll('[data-index]');
+    let nodes = this.contentNode.querySelectorAll('[data-index]');
     // If the palette contains any enabled items, activate the last one.
     if (nodes.length) {
       // Scroll all the way to the bottom of the content node.
@@ -494,8 +490,8 @@ class CommandPalette extends Widget {
    * Deactivate (i.e. deselect) all palette items.
    */
   private _deactivate(): void {
-    let selector = `.${ITEM_CLASS}.${ACTIVE_CLASS}`;
-    let nodes = this.node.querySelectorAll(selector);
+    let selector = `.${ACTIVE_CLASS}`;
+    let nodes = this.contentNode.querySelectorAll(selector);
     for (let i = 0; i < nodes.length; ++i) {
       nodes[i].classList.remove(ACTIVE_CLASS);
     }
@@ -546,7 +542,7 @@ class CommandPalette extends Widget {
   }
 
   /**
-   *
+   * Handle the `'input'` event for the command palette.
    */
   private _evtInput(event: Event): void {
     this.update();
@@ -574,7 +570,7 @@ class CommandPalette extends Widget {
    */
   private _findActiveNode(): HTMLElement {
     let selector = `.${ACTIVE_CLASS}`;
-    return this.node.querySelector(selector) as HTMLElement;
+    return this.contentNode.querySelector(selector) as HTMLElement;
   }
 
   /**
