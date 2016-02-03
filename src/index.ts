@@ -7,8 +7,10 @@
 // |----------------------------------------------------------------------------*/
 'use strict';
 
+export * from './abstractmodel';
 export * from './palette';
-export * from './source';
+export * from './standardmodel';
+export * from './stringsearch';
 
 import './index.css';
 
