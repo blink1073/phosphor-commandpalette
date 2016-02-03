@@ -420,21 +420,15 @@ class CommandPalette extends Widget {
       if (direction === ScrollDirection.Down) return this._activateFirst();
       if (direction === ScrollDirection.Up) return this._activateLast();
     }
-    let flat = this._buffer.reduce((acc, section, i) => {
-      section.items.forEach((item, j) => {
-        if (item.isEnabled) acc.push(`${i}-${j}`);
-      });
-      return acc;
-    }, [] as string[]);
-    let current = flat.indexOf(active.getAttribute('data-index'));
+    let current = parseInt(active.dataset['index'], 10);
     let newActive: number;
     if (direction === ScrollDirection.Up) {
-      newActive = current > 0 ? current - 1 : flat.length - 1;
+      newActive = current > 0 ? current - 1 : this._buffer.length - 1;
     } else {
-      newActive = current < flat.length - 1 ? current + 1 : 0;
+      newActive = current < this._buffer.length - 1 ? current + 1 : 0;
     }
     if (newActive === 0) return this._activateFirst();
-    let selector = `[data-index="${flat[newActive]}"]`;
+    let selector = `[data-index="${newActive}"]`;
     let target = this.node.querySelector(selector) as HTMLElement;
     let scrollIntoView = scrollTest(this.contentNode, target);
     let alignToTop = direction === ScrollDirection.Up;
@@ -558,11 +552,20 @@ class CommandPalette extends Widget {
     if (keyCode === ENTER) {
       let active = this._findActiveItem();
       if (!active) return;
-      let indices = active.getAttribute('data-index');
-      let category = parseInt(indices.split('-')[0], 10);
-      let index = parseInt(indices.split('-')[1], 10);
-      let item = this._buffer[category].items[index];
-      if (item.isEnabled) item.execute();
+      let { type, value } = this._buffer[parseInt(active.dataset['index'], 10)];
+      switch (type) {
+      case SearchResultType.Header:
+        let query = (value as IHeaderResult).queryPrefix;
+        this.inputNode.value = `${query}:`;
+        break;
+      case SearchResultType.Command:
+        let command = (value as ICommandResult).command;
+        let args = (value as ICommandResult).args;
+        if (command.isEnabled) command.execute(args);
+        break;
+      default:
+        throw new Error('invalid search result type');
+      }
       this._deactivate();
       return;
     }
