@@ -41,7 +41,7 @@ interface IHeaderResult {
   /**
    * The title text for the header.
    */
-  title: string;
+  text: string;
 
   /**
    * A query prefix to further refine the search, or an empty string.
@@ -69,13 +69,13 @@ interface IHeaderResult {
 export
 interface ICommandResult {
   /**
-   * The title for the command.
+   * The title text for the command.
    *
    * #### Notes
-   * The title may include markup to highlight matched characters.
+   * The text may include markup to highlight matched characters.
    * This feature *should not* be abused for arbitrary rendering.
    */
-  title: string;
+  text: string;
 
   /**
    * The class name(s) for the item icon, or an empty string.

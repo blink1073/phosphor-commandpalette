@@ -8,10 +8,6 @@
 'use strict';
 
 import {
-  CommandItem
-} from 'phosphor-command';
-
-import {
   Message
 } from 'phosphor-messaging';
 
@@ -20,8 +16,9 @@ import {
 } from 'phosphor-widget';
 
 import {
-  CommandSource, ISearchResultSection
-} from './source';
+  AbstractPaletteModel, ICommandResult, IHeaderResult, ISearchResult,
+  SearchResultType
+} from './abstractmodel';
 
 
 /**
@@ -147,15 +144,14 @@ class CommandPalette extends Widget {
    * #### Notes
    * This method may be reimplemented to create custom headers.
    */
-  static createHeaderNode(title: string, category: string): HTMLElement {
+  static createHeaderNode(data: IHeaderResult): HTMLElement {
     let node = document.createElement('li');
     let text = document.createElement('span');
     let icon = document.createElement('span');
     node.className = HEADER_CLASS;
     text.className = HEADER_TEXT_CLASS;
     icon.className = HEADER_ICON_CLASS;
-    node.setAttribute('data-category', category);
-    text.textContent = title;
+    text.textContent = data.text;
     node.appendChild(text);
     node.appendChild(icon);
     return node;
@@ -173,7 +169,7 @@ class CommandPalette extends Widget {
    * #### Notes
    * This method may be reimplemented to create custom items.
    */
-  static createItemNode(item: CommandItem, index: string): HTMLElement {
+  static createItemNode(data: ICommandResult): HTMLElement {
     let node = document.createElement('li');
     let content = document.createElement('div');
     let icon = document.createElement('span');
@@ -187,21 +183,20 @@ class CommandPalette extends Widget {
     caption.className = ITEM_CAPTION_CLASS;
 
     let itemClass = ITEM_CLASS;
-    let extraItem = item.className;
-    let disabled = !item.isEnabled;
+    let extraItem = data.className;
+    let disabled = !data.command.isEnabled(data.args);
     if (extraItem) itemClass += ' ' + extraItem;
     if (disabled) itemClass += ' ' + DISABLED_CLASS;
     node.className = itemClass;
 
     let iconClass = ITEM_ICON_CLASS;
-    let extraIcon = item.icon;
+    let extraIcon = data.icon;
     if (extraIcon) iconClass += ' ' + extraIcon;
     icon.className = iconClass;
 
-    node.setAttribute('data-index', index);
-    text.textContent = item.text;
-    shortcut.textContent = item.shortcut;
-    caption.textContent = item.caption;
+    text.textContent = data.text;
+    shortcut.textContent = data.shortcut;
+    caption.textContent = data.caption;
 
     content.appendChild(shortcut);
     content.appendChild(text);
@@ -224,32 +219,32 @@ class CommandPalette extends Widget {
    * Dispose of the resources held by the command palette.
    */
   dispose(): void {
-    this._source = null;
+    this._model = null;
     super.dispose();
   }
 
   /**
-   * Get the command source for the command palette.
+   * Get the model for the command palette.
    */
-  get source(): CommandSource {
-    return this._source;
+  get model(): AbstractPaletteModel {
+    return this._model;
   }
 
   /**
-   * Set the command source for the command palette.
+   * Set the model for the command palette.
    */
-  set source(value: CommandSource) {
+  set model(value: AbstractPaletteModel) {
     value = value || null;
-    if (this._source === value) {
+    if (this._model === value) {
       return;
     }
-    if (this._source) {
-      this._source.changed.disconnect(this._onSourceChanged);
+    if (this._model) {
+      this._model.changed.disconnect(this._onModelChanged);
     }
     if (value) {
-      value.changed.connect(this._onSourceChanged);
+      value.changed.connect(this._onModelChanged);
     }
-    this._source = value;
+    this._model = value;
     this.update();
   }
 
@@ -325,24 +320,17 @@ class CommandPalette extends Widget {
    *
    */
   protected onUpdateRequest(msg: Message): void {
-    let t1 = performance.now();
-
     //
     let content = this.contentNode;
     content.textContent = '';
 
     //
-    if (!this._source) {
+    if (!this._model) {
       return;
     }
 
     //
-    let match = this.inputNode.value.trim().match(QUERY_REGEX);
-    let category = match[1] || '';
-    let text = match[2].trim();
-
-    //
-    let result = this._source.search(category, text);
+    let result = this._model.search(this.inputNode.value);
 
     //
     if (result.length === 0) {
@@ -356,51 +344,54 @@ class CommandPalette extends Widget {
     let ctor = this.constructor as typeof CommandPalette;
 
     //
-    for (let i = 0; i < result.length; ++i) {
-      let section = result[i];
-      let title = section.title;
-      let category = section.category;
-      fragment.appendChild(ctor.createHeaderNode(title, category));
-      for (let j = 0; j < section.items.length; ++j) {
-        let item = section.items[j];
-        fragment.appendChild(ctor.createItemNode(item, `${i}-${j}`));
+    for (let i = 0, n = result.length; i < n; ++i) {
+      let node: HTMLElement;
+      let { type, value } = result[i];
+      switch (type) {
+      case SearchResultType.Header:
+        node = ctor.createHeaderNode(value as IHeaderResult);
+        break;
+      case SearchResultType.Command:
+        node = ctor.createItemNode(value as ICommandResult);
+        break;
+      default:
+        throw new Error('invalid search result type');
       }
+      node.dataset['index'] = `${i}`;
+      fragment.appendChild(node);
     }
 
     //
     content.appendChild(fragment);
-
-    let t2 = performance.now();
-    console.log(t2 - t1);
   }
 
   /**
    * Handle the `'click'` event for the command palette.
    */
   private _evtClick(event: MouseEvent): void {
-    let { altKey, ctrlKey, metaKey, shiftKey } = event;
-    if (event.button !== 0 || altKey || ctrlKey || metaKey || shiftKey) return;
-    event.stopPropagation();
-    event.preventDefault();
-    let target = event.target as HTMLElement;
-    let isCategory: boolean;
-    let isItem: boolean;
-    while (
-      !(isCategory = target.hasAttribute('data-category')) &&
-      !(isItem = target.hasAttribute('data-index'))) {
-        if (target === this.node) return;
-        target = target.parentElement;
-    }
-    if (isCategory) {
-      let category = target.getAttribute('data-category');
-      console.log('category search', category);
-    } else {
-      let indices = target.getAttribute('data-index');
-      let category = parseInt(indices.split('-')[0], 10);
-      let index = parseInt(indices.split('-')[1], 10);
-      let item = this._buffer[category].items[index];
-      if (item.isEnabled) item.execute();
-    }
+    // let { altKey, ctrlKey, metaKey, shiftKey } = event;
+    // if (event.button !== 0 || altKey || ctrlKey || metaKey || shiftKey) return;
+    // event.stopPropagation();
+    // event.preventDefault();
+    // let target = event.target as HTMLElement;
+    // let isCategory: boolean;
+    // let isItem: boolean;
+    // while (
+    //   !(isCategory = target.hasAttribute('data-category')) &&
+    //   !(isItem = target.hasAttribute('data-index'))) {
+    //     if (target === this.node) return;
+    //     target = target.parentElement;
+    // }
+    // if (isCategory) {
+    //   let category = target.getAttribute('data-category');
+    //   console.log('category search', category);
+    // } else {
+    //   let indices = target.getAttribute('data-index');
+    //   let category = parseInt(indices.split('-')[0], 10);
+    //   let index = parseInt(indices.split('-')[1], 10);
+    //   let item = this._buffer[category].items[index];
+    //   if (item.isEnabled) item.execute();
+    // }
   }
 
   /**
@@ -420,10 +411,10 @@ class CommandPalette extends Widget {
   /**
    *
    */
-  private _onSourceChanged(): void {
+  private _onModelChanged(): void {
 
   }
 
-  private _buffer: ISearchResultSection[];
-  private _source: CommandSource = null;
+  private _buffer: ISearchResult[];
+  private _model: AbstractPaletteModel = null;
 }
