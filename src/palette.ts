@@ -393,15 +393,19 @@ class CommandPalette extends Widget {
       let { type, value } = result[i];
       switch (type) {
       case SearchResultType.Header:
+        let hasQuery = !!(value as IHeaderResult).queryPrefix;
         node = ctor.createHeaderNode(value as IHeaderResult);
+        if (hasQuery) node.dataset['index'] = `${i}`;
         break;
       case SearchResultType.Command:
+        let command = (value as ICommandResult).command;
+        let args = (value as ICommandResult).args;
         node = ctor.createItemNode(value as ICommandResult);
+        if (command.isEnabled(args)) node.dataset['index'] = `${i}`;
         break;
       default:
         throw new Error('invalid search result type');
       }
-      node.dataset['index'] = `${i}`;
       fragment.appendChild(node);
     }
 
@@ -420,16 +424,16 @@ class CommandPalette extends Widget {
       if (direction === ScrollDirection.Down) return this._activateFirst();
       if (direction === ScrollDirection.Up) return this._activateLast();
     }
-    let current = parseInt(active.dataset['index'], 10);
+    let nodes = this.contentNode.querySelectorAll('[data-index]');
+    let current = Array.prototype.indexOf.call(nodes, active);
     let newActive: number;
     if (direction === ScrollDirection.Up) {
-      newActive = current > 0 ? current - 1 : this._buffer.length - 1;
+      newActive = current > 0 ? current - 1 : nodes.length - 1;
     } else {
-      newActive = current < this._buffer.length - 1 ? current + 1 : 0;
+      newActive = current < nodes.length - 1 ? current + 1 : 0;
     }
     if (newActive === 0) return this._activateFirst();
-    let selector = `[data-index="${newActive}"]`;
-    let target = this.node.querySelector(selector) as HTMLElement;
+    let target = nodes[newActive] as HTMLElement;
     let scrollIntoView = scrollTest(this.contentNode, target);
     let alignToTop = direction === ScrollDirection.Up;
     this._activateNode(target, scrollIntoView, alignToTop);
@@ -439,9 +443,7 @@ class CommandPalette extends Widget {
    * Activate the first item.
    */
   private _activateFirst(): void {
-    // Query the DOM for items that are not disabled.
-    let selector = `.${ITEM_CLASS}:not(.${DISABLED_CLASS})`;
-    let nodes = this.node.querySelectorAll(selector);
+    let nodes = this.node.querySelectorAll('[data-index]');
     // If the palette contains any enabled items, activate the first one.
     if (nodes.length) {
       // Scroll all the way to the top of the content node.
@@ -458,9 +460,7 @@ class CommandPalette extends Widget {
    * Activate the last command.
    */
   private _activateLast(): void {
-    // Query the DOM for items that are not disabled.
-    let selector = `.${ITEM_CLASS}:not(.${DISABLED_CLASS})`;
-    let nodes = this.node.querySelectorAll(selector);
+    let nodes = this.node.querySelectorAll('[data-index]');
     // If the palette contains any enabled items, activate the last one.
     if (nodes.length) {
       // Scroll all the way to the bottom of the content node.
@@ -562,7 +562,7 @@ class CommandPalette extends Widget {
     case SearchResultType.Command:
       let command = (value as ICommandResult).command;
       let args = (value as ICommandResult).args;
-      if (command.isEnabled) command.execute(args);
+      if (command.isEnabled(args)) command.execute(args);
       break;
     default:
       throw new Error('invalid search result type');
@@ -573,7 +573,7 @@ class CommandPalette extends Widget {
    * Find the currently selected item.
    */
   private _findActiveNode(): HTMLElement {
-    let selector = `.${ITEM_CLASS}.${ACTIVE_CLASS}`;
+    let selector = `.${ACTIVE_CLASS}`;
     return this.node.querySelector(selector) as HTMLElement;
   }
 
