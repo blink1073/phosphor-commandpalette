@@ -95,12 +95,23 @@ body {
 }
 
 
+.p-CommandPalette-item.p-mod-active {
+  color: white;
+  background: #7FDBFF;
+}
+
+.p-CommandPalette-item.p-mod-active .p-CommandPalette-itemCaption {
+  color: white;
+}
+
+
 .p-CommandPalette-item.p-mod-disabled {
   color: #D5D5D5;
 }
 
 
-.p-CommandPalette-item:hover {
+.p-CommandPalette-item[data-index]:hover,
+.p-CommandPalette-header[data-index]:hover {
   background: #DDDDDD;
 }
 

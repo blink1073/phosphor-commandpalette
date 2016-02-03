@@ -106,6 +106,50 @@ const ACTIVE_CLASS = 'p-mod-active';
  */
 const QUERY_REGEX = /^(\w*:)?(.*)$/;
 
+/**
+ * The `keyCode` value for the enter key.
+ */
+const ENTER = 13;
+
+/**
+ * The `keyCode` value for the escape key.
+ */
+const ESCAPE = 27;
+
+/**
+ * The `keyCode` value for the up arrow key.
+ */
+const UP_ARROW = 38;
+
+/**
+ * The `keyCode` value for the down arrow key.
+ */
+const DOWN_ARROW = 40;
+
+/**
+ * A map of the special `keyCode` values a command palette uses for navigation.
+ */
+const FN_KEYS: { [key: string]: void } = {
+  [ENTER]: null,
+  [ESCAPE]: null,
+  [UP_ARROW]: null,
+  [DOWN_ARROW]: null
+};
+
+/**
+ * The scroll directions for changing the active command.
+ */
+const enum ScrollDirection {
+  /**
+   * Move the active selection up.
+   */
+  Up,
+  /**
+   * Move the active selection down.
+   */
+  Down
+}
+
 
 /**
  * A widget which displays commands from a command source.
@@ -135,9 +179,7 @@ class CommandPalette extends Widget {
   /**
    * Create a header node for a command palette.
    *
-   * @param title - The palette section title.
-   *
-   * @param category - The palette section data-category value.
+   * @param data - The palette header item data to render.
    *
    * @returns A new DOM node for a palette section header.
    *
@@ -160,9 +202,7 @@ class CommandPalette extends Widget {
   /**
    * Create an item node for a command palette.
    *
-   * @param item - The command item to render.
-   *
-   * @param index - The data-index attribute value for the command item.
+   * @param data - The palette item data to render.
    *
    * @returns A new DOM node for a palette section item.
    *
@@ -349,15 +389,19 @@ class CommandPalette extends Widget {
       let { type, value } = result[i];
       switch (type) {
       case SearchResultType.Header:
+        let hasQuery = !!(value as IHeaderResult).queryPrefix;
         node = ctor.createHeaderNode(value as IHeaderResult);
+        if (hasQuery) node.dataset['index'] = `${i}`;
         break;
       case SearchResultType.Command:
+        let command = (value as ICommandResult).command;
+        let args = (value as ICommandResult).args;
         node = ctor.createItemNode(value as ICommandResult);
+        if (command.isEnabled(args)) node.dataset['index'] = `${i}`;
         break;
       default:
         throw new Error('invalid search result type');
       }
-      node.dataset['index'] = `${i}`;
       fragment.appendChild(node);
     }
 
@@ -366,46 +410,167 @@ class CommandPalette extends Widget {
   }
 
   /**
+   * Activate the next command in the given direction.
+   *
+   * @param direction - The scroll direction.
+   */
+  private _activate(direction: ScrollDirection): void {
+    let active = this._findActiveNode();
+    if (!active) {
+      if (direction === ScrollDirection.Down) return this._activateFirst();
+      if (direction === ScrollDirection.Up) return this._activateLast();
+    }
+    let nodes = this.contentNode.querySelectorAll('[data-index]');
+    let current = Array.prototype.indexOf.call(nodes, active);
+    let newActive: number;
+    if (direction === ScrollDirection.Up) {
+      newActive = current > 0 ? current - 1 : nodes.length - 1;
+    } else {
+      newActive = current < nodes.length - 1 ? current + 1 : 0;
+    }
+    if (newActive === 0) return this._activateFirst();
+    let target = nodes[newActive] as HTMLElement;
+    let scrollIntoView = scrollTest(this.contentNode, target);
+    let alignToTop = direction === ScrollDirection.Up;
+    this._activateNode(target, scrollIntoView, alignToTop);
+  }
+
+  /**
+   * Activate the first item.
+   */
+  private _activateFirst(): void {
+    let nodes = this.contentNode.querySelectorAll('[data-index]');
+    // If the palette contains any enabled items, activate the first one.
+    if (nodes.length) {
+      // Scroll all the way to the top of the content node.
+      this.contentNode.scrollTop = 0;
+      let target = nodes[0] as HTMLElement;
+      // Test if the first enabled item is visible.
+      let scrollIntoView = scrollTest(this.contentNode, target);
+      let alignToTop = true;
+      this._activateNode(target, scrollIntoView, alignToTop);
+    }
+  }
+
+  /**
+   * Activate the last command.
+   */
+  private _activateLast(): void {
+    let nodes = this.contentNode.querySelectorAll('[data-index]');
+    // If the palette contains any enabled items, activate the last one.
+    if (nodes.length) {
+      // Scroll all the way to the bottom of the content node.
+      this.contentNode.scrollTop = this.contentNode.scrollHeight;
+      let target = nodes[nodes.length - 1] as HTMLElement;
+      // Test if the last enabled item is visible.
+      let scrollIntoView = scrollTest(this.contentNode, target);
+      let alignToTop = false;
+      this._activateNode(target, scrollIntoView, alignToTop);
+    }
+  }
+
+  /**
+   * Activate a specific command and optionally scroll it into view.
+   *
+   * @param target - The node that is being activated.
+   *
+   * @param scrollIntoView - A flag indicating whether to scroll to the node.
+   *
+   * @param alignToTop - A flag indicating whether to align scroll to top.
+   */
+  private _activateNode(target: HTMLElement, scrollIntoView?: boolean, alignToTop?: boolean): void {
+    let active = this._findActiveNode();
+    if (target === active) return;
+    if (active) this._deactivate();
+    target.classList.add(ACTIVE_CLASS);
+    if (scrollIntoView) target.scrollIntoView(alignToTop);
+  }
+
+  /**
+   * Deactivate (i.e. deselect) all palette items.
+   */
+  private _deactivate(): void {
+    let selector = `.${ACTIVE_CLASS}`;
+    let nodes = this.contentNode.querySelectorAll(selector);
+    for (let i = 0; i < nodes.length; ++i) {
+      nodes[i].classList.remove(ACTIVE_CLASS);
+    }
+  }
+
+  /**
    * Handle the `'click'` event for the command palette.
    */
   private _evtClick(event: MouseEvent): void {
-    // let { altKey, ctrlKey, metaKey, shiftKey } = event;
-    // if (event.button !== 0 || altKey || ctrlKey || metaKey || shiftKey) return;
-    // event.stopPropagation();
-    // event.preventDefault();
-    // let target = event.target as HTMLElement;
-    // let isCategory: boolean;
-    // let isItem: boolean;
-    // while (
-    //   !(isCategory = target.hasAttribute('data-category')) &&
-    //   !(isItem = target.hasAttribute('data-index'))) {
-    //     if (target === this.node) return;
-    //     target = target.parentElement;
-    // }
-    // if (isCategory) {
-    //   let category = target.getAttribute('data-category');
-    //   console.log('category search', category);
-    // } else {
-    //   let indices = target.getAttribute('data-index');
-    //   let category = parseInt(indices.split('-')[0], 10);
-    //   let index = parseInt(indices.split('-')[1], 10);
-    //   let item = this._buffer[category].items[index];
-    //   if (item.isEnabled) item.execute();
-    // }
+    let { altKey, ctrlKey, metaKey, shiftKey } = event;
+    if (event.button !== 0 || altKey || ctrlKey || metaKey || shiftKey) return;
+    event.stopPropagation();
+    event.preventDefault();
+    let target = event.target as HTMLElement;
+    while (!target.hasAttribute('data-index')) {
+        if (target === this.node) return;
+        target = target.parentElement;
+    }
+    this._execute(target);
   }
 
   /**
-   *
+   * Handle the `'keydown'` event for the command palette.
    */
   private _evtKeyDown(event: KeyboardEvent): void {
-
+    let { altKey, ctrlKey, metaKey, keyCode } = event;
+    // Ignore system keyboard shortcuts.
+    if (altKey || ctrlKey || metaKey) return;
+    if (!FN_KEYS.hasOwnProperty(`${keyCode}`)) return;
+    // If escape key is pressed and nothing is active, allow propagation.
+    if (keyCode === ESCAPE) {
+      if (!this._findActiveNode()) return;
+      event.preventDefault();
+      event.stopPropagation();
+      return this._deactivate();
+    }
+    event.preventDefault();
+    event.stopPropagation();
+    if (keyCode === UP_ARROW) return this._activate(ScrollDirection.Up);
+    if (keyCode === DOWN_ARROW) return this._activate(ScrollDirection.Down);
+    if (keyCode === ENTER) {
+      let active = this._findActiveNode();
+      if (!active) return;
+      this._execute(active);
+      this._deactivate();
+      return;
+    }
   }
 
   /**
-   *
+   * Handle the `'input'` event for the command palette.
    */
   private _evtInput(event: Event): void {
     this.update();
+  }
+
+  private _execute(target: HTMLElement): void {
+    let { type, value } = this._buffer[parseInt(target.dataset['index'], 10)];
+    switch (type) {
+    case SearchResultType.Header:
+      let query = (value as IHeaderResult).queryPrefix;
+      console.log('category search', query);
+      break;
+    case SearchResultType.Command:
+      let command = (value as ICommandResult).command;
+      let args = (value as ICommandResult).args;
+      if (command.isEnabled(args)) command.execute(args);
+      break;
+    default:
+      throw new Error('invalid search result type');
+    }
+  }
+
+  /**
+   * Find the currently selected item.
+   */
+  private _findActiveNode(): HTMLElement {
+    let selector = `.${ACTIVE_CLASS}`;
+    return this.contentNode.querySelector(selector) as HTMLElement;
   }
 
   /**
@@ -417,4 +582,20 @@ class CommandPalette extends Widget {
 
   private _buffer: ISearchResult[];
   private _model: AbstractPaletteModel = null;
+}
+
+
+/**
+ * Test to see if a child node needs to be scrolled to within its parent node.
+ *
+ * @param parentNode - The element containing the child being checked.
+ *
+ * @param childNode - The child element whose visibility is being checked.
+ *
+ * @returns true if the parent node needs to be scrolled to reveal the child.
+ */
+function scrollTest(parentNode: HTMLElement, childNode: HTMLElement): boolean {
+  let parent = parentNode.getBoundingClientRect();
+  let child = childNode.getBoundingClientRect();
+  return child.top < parent.top || child.top + child.height > parent.bottom;
 }

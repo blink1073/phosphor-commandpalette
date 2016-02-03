@@ -45,8 +45,10 @@ const logCommand: ICommand = {
     timeout = setTimeout(() => { output.node.textContent = ''; }, 3000);
   },
 
-  isEnabled: () => {
-    return true;
+  isEnabled: (args) => {
+    let first = (args as any).text[0].toLocaleLowerCase();
+    // If the title's letter is N through Z.
+    return first.charCodeAt(0) > 109;
   },
 };
 
@@ -84,10 +86,10 @@ const p2ItemOptions = [
 
 
 
-
-
 function createItemOpts(category: string, text: string, caption: string): IStandardPaletteItemOptions {
-  return { text, caption, category, command: logCommand, args: { text, caption } };
+  let command = logCommand;
+  let args = { text, caption };
+  return { text, caption, category, command, args };
 }
 
 
