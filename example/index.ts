@@ -6,83 +6,95 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 'use strict';
+
 import {
   BoxPanel
 } from 'phosphor-boxpanel';
 
 import {
-  CommandItem, SimpleCommand
+  ICommand
 } from 'phosphor-command';
 
 import {
- CommandPalette, SimpleSource
+ CommandPalette, IStandardPaletteItemOptions, StandardPaletteModel
 } from 'phosphor-commandpalette';
 
 
 const p1 = new CommandPalette();
 const p2 = new CommandPalette();
 
-const s1 = new SimpleSource();
-const s2 = new SimpleSource();
+const m1 = new StandardPaletteModel();
+const m2 = new StandardPaletteModel();
 
-p1.source = s1;
-p2.source = s2;
+p1.model = m1;
+p2.model = m2;
+
 
 const outer = new BoxPanel();
 const output = new BoxPanel();
 const palettes = new BoxPanel();
 
-const p1Commands = [
-  createCommand('Ancient near east', 'Sumer', 'The Mesopotamian city-states'),
-  createCommand('Ancient near east', 'Babylon', 'The city-state of Babylon'),
-  createCommand('Ancient near east', 'Hittites', 'The Hittite empire'),
-  createCommand('Ancient near east', 'Egypt', 'The Egyptian empire'),
-  createCommand('Ancient near east', 'Persia', 'The Persian empire'),
-  createCommand('Ancient Mesoamerica', 'Olmecs', 'The Olmec empire'),
-  createCommand('Ancient Mesoamerica', 'Aztecs', 'The Aztec empire'),
-  createCommand('Ancient Mesoamerica', 'Mayans', 'The Mayan empire'),
-  createCommand('Ancient South American', 'Chimú', 'The Chimú culture'),
-  createCommand('Ancient South American', 'Inca', 'The Incan empire')
-];
-
-const p2Commands = [
-  createCommand('Romance languages', 'Italian', 'lingua italiana'),
-  createCommand('Romance languages', 'Romanian', 'limba română'),
-  createCommand('Romance languages', 'French', 'le français'),
-  createCommand('Romance languages', 'Spanish', 'español'),
-  createCommand('Romance languages', 'Portuguese', 'língua portuguesa'),
-  createCommand('Germanic languages', 'German', 'Deutsch'),
-  createCommand('Germanic languages', 'English', 'English'),
-  createCommand('Germanic languages', 'Danish', 'dansk sprog'),
-  createCommand('Germanic languages', 'Swedish', 'svenska'),
-  createCommand('Germanic languages', 'Icelandic', 'íslenska'),
-  createCommand('Germanic languages', 'Norwegian', 'norsk'),
-  createCommand('Germanic languages', 'Dutch', 'Nederlands'),
-  createCommand('Language isolates', 'Basque', 'Euskara'),
-  createCommand('Language isolates', 'Korean', '한국어/조선말')
-];
 
 var timeout: number;
 
-function createCommand(category: string, title: string, caption: string): CommandItem {
-  let command = new SimpleCommand({
-    handler: () => {
-      if (timeout) clearTimeout(timeout);
-      output.node.textContent = caption || title;
-      timeout = setTimeout(() => { output.node.textContent = ''; }, 3000);
-    },
-    text: title,
-    caption: caption,
-    category: category
-  });
-  return new CommandItem({ command });
+const logCommand: ICommand = {
+
+  execute: (args: any) => {
+    if (timeout) clearTimeout(timeout);
+    output.node.textContent = args.caption || args.text;
+    timeout = setTimeout(() => { output.node.textContent = ''; }, 3000);
+  },
+
+  isEnabled: () => {
+    return true;
+  },
+};
+
+
+const p1ItemOptions = [
+  createItemOpts('Ancient near east', 'Sumer', 'The Mesopotamian city-states'),
+  createItemOpts('Ancient near east', 'Babylon', 'The city-state of Babylon'),
+  createItemOpts('Ancient near east', 'Hittites', 'The Hittite empire'),
+  createItemOpts('Ancient near east', 'Egypt', 'The Egyptian empire'),
+  createItemOpts('Ancient near east', 'Persia', 'The Persian empire'),
+  createItemOpts('Ancient Mesoamerica', 'Olmecs', 'The Olmec empire'),
+  createItemOpts('Ancient Mesoamerica', 'Aztecs', 'The Aztec empire'),
+  createItemOpts('Ancient Mesoamerica', 'Mayans', 'The Mayan empire'),
+  createItemOpts('Ancient South American', 'Chimú', 'The Chimú culture'),
+  createItemOpts('Ancient South American', 'Inca', 'The Incan empire')
+];
+
+
+const p2ItemOptions = [
+  createItemOpts('Romance languages', 'Italian', 'lingua italiana'),
+  createItemOpts('Romance languages', 'Romanian', 'limba română'),
+  createItemOpts('Romance languages', 'French', 'le français'),
+  createItemOpts('Romance languages', 'Spanish', 'español'),
+  createItemOpts('Romance languages', 'Portuguese', 'língua portuguesa'),
+  createItemOpts('Germanic languages', 'German', 'Deutsch'),
+  createItemOpts('Germanic languages', 'English', 'English'),
+  createItemOpts('Germanic languages', 'Danish', 'dansk sprog'),
+  createItemOpts('Germanic languages', 'Swedish', 'svenska'),
+  createItemOpts('Germanic languages', 'Icelandic', 'íslenska'),
+  createItemOpts('Germanic languages', 'Norwegian', 'norsk'),
+  createItemOpts('Germanic languages', 'Dutch', 'Nederlands'),
+  createItemOpts('Language isolates', 'Basque', 'Euskara'),
+  createItemOpts('Language isolates', 'Korean', '한국어/조선말')
+];
+
+
+
+
+
+function createItemOpts(category: string, text: string, caption: string): IStandardPaletteItemOptions {
+  return { text, caption, category, command: logCommand, args: { text, caption } };
 }
 
 
 function main() {
-  // Populate left palette commands.
-  s1.add(p1Commands);
-  s2.add(p2Commands);
+  // Populate command palette models.
+  m1.addItems(p1ItemOptions);
+  m2.addItems(p2ItemOptions);
 
   // Populate palettes panel.
   BoxPanel.setStretch(p1, 1);
@@ -105,6 +117,7 @@ function main() {
   outer.id = 'main';
   outer.attach(document.body);
 }
+
 
 window.onload = main;
 window.onresize = () => { outer.update(); };
