@@ -94,10 +94,6 @@ interface IStandardPaletteItemOptions {
 }
 
 
-// TODO - should we make some properties on this class mutable? Doing
-// so would require the item to keep an internal reference to the model
-// which created it, so that it could emit the changed signal as needed.
-
 /**
  * An object for use with a standard palette model.
  *
