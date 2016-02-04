@@ -209,13 +209,13 @@ class CommandPalette extends Widget {
     let content = document.createElement('div');
     let icon = document.createElement('span');
     let text = document.createElement('span');
-    let shortcut = document.createElement('span');
     let caption = document.createElement('span');
+    let shortcut = document.createElement('span');
 
     content.className = ITEM_CONTENT_CLASS;
     text.className = ITEM_TEXT_CLASS;
-    shortcut.className = ITEM_SHORTCUT_CLASS;
     caption.className = ITEM_CAPTION_CLASS;
+    shortcut.className = ITEM_SHORTCUT_CLASS;
 
     let itemClass = ITEM_CLASS;
     let extraItem = data.className;
@@ -227,9 +227,9 @@ class CommandPalette extends Widget {
     if (extraIcon) iconClass += ' ' + extraIcon;
     icon.className = iconClass;
 
-    text.textContent = data.text;
-    shortcut.textContent = data.shortcut;
-    caption.textContent = data.caption;
+    text.innerHTML = data.text;
+    caption.innerHTML = data.caption;
+    shortcut.innerHTML = data.shortcut;
 
     content.appendChild(shortcut);
     content.appendChild(text);

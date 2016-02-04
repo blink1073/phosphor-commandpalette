@@ -9,67 +9,38 @@
 
 
 /**
- * The prefix that prepends a matched character in a search result.
- */
-const PREFIX = '<em>';
-
-/**
- * The suffix that affixed onto a matched character in a search result.
- */
-const SUFFIX = '</em>';
-
-/**
- * A namespace which holds text scoring and matching functions.
+ * A namespace which holds string searching functionality.
  */
 export
 namespace StringSearch {
   /**
-   * The result of a `StringSearch.sumOfSquares` search.
+   * The result of a sum-of-squares string search.
    */
   export
-  interface IStringSearchResult {
+  interface ISumOfSquaresResult {
     /**
-     * The search score, lower is better.
+     * A score which indicates the strength of the match.
+     *
+     * A lower score is better, and zero is the best possible score.
      */
     score: number;
+
     /**
-     * The matching indices of the original string that coincide with the query.
+     * The indices of the matched characters in the source text.
+     *
+     * The indices will appear in increasing order.
      */
     indices: number[];
   }
 
   /**
-   * Highlight the matched characters of a source string.
-   *
-   * @param sourceText - The text which should be searched.
-   *
-   * @param indices - The indices of the matched characters.
-   *
-   * @returns a string with interpolated `<em>` tags for each matched index.
-   */
-  export
-  function highlight(sourceText: string, indices: number[]): string {
-    let last = 0;
-    let result = '';
-    for (let i of indices) {
-      result += sourceText.slice(last, i) + PREFIX + sourceText[i] + SUFFIX;
-      last = i + 1;
-    }
-    return result + sourceText.slice(last);
-  }
-
-  /**
-   * Compute the sum-of-squares score for the given search text.
+   * Compute the sum-of-squares match for the given search text.
    *
    * @param sourceText - The text which should be searched.
    *
    * @param queryText - The query text to locate in the source text.
    *
-   * @returns An `IStringSearchResult` value with a `score` which indicates
-   *   how strongly the query text matches the source text. A lower score
-   *   indicates a stronger match. Zero is the lowest possible matched score.
-   *   Additionally, an array of `indices` indicates the positions in the
-   *   source text where matches were found. `null` is returned for no match.
+   * @returns The match result object, or `null` if there is no match.
    *
    * #### Notes
    * This scoring algorithm uses a sum-of-squares approach to determine
@@ -85,14 +56,43 @@ namespace StringSearch {
    * This has a runtime complexity of `O(n)` on `sourceText`.
    */
   export
-  function sumOfSquares(sourceText: string, queryText: string): IStringSearchResult {
-    let result: IStringSearchResult = { score: 0, indices: [] };
+  function sumOfSquares(sourceText: string, queryText: string): ISumOfSquaresResult {
+    let score = 0;
+    let indices = new Array<number>(queryText.length);
     for (let i = 0, j = 0, n = queryText.length; i < n; ++i, ++j) {
       j = sourceText.indexOf(queryText[i], j);
       if (j === -1) return null;
-      result.indices.push(j);
-      result.score += j * j;
+      indices[i] = j;
+      score += j * j;
     }
-    return result;
+    return { score, indices };
+  }
+
+  /**
+   * Highlight the matched characters of a source string.
+   *
+   * @param source - The text which should be highlighted.
+   *
+   * @param indices - The indices of the matched characters. They must
+   *   appear in increasing order and must be in bounds of the source.
+   *
+   * @returns A string with interpolated `<em>` tags.
+   */
+  export
+  function highlight(sourceText: string, indices: number[]): string {
+    let k = 0;
+    let last = 0;
+    let result = '';
+    let n = indices.length;
+    while (k < n) {
+      let i = indices[k];
+      let j = indices[k];
+      while (++k < n && indices[k] === j + 1) j++;
+      let head = sourceText.slice(last, i);
+      let chunk = sourceText.slice(i, j + 1);
+      result += `${head}<em>${chunk}</em>`;
+      last = j + 1;
+    }
+    return result + sourceText.slice(last);
   }
 }

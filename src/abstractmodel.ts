@@ -93,7 +93,8 @@ interface ICommandResult {
    * The shortcut for the item, or an empty string.
    *
    * #### Notes
-   * This value is for decoration purposes only.
+   * This value is for decoration purposes only. It may include markup
+   * for customizing the display of the shortcut.
    */
   shortcut: string;
 
@@ -139,6 +140,24 @@ interface ISearchResult {
  */
 export
 abstract class AbstractPaletteModel {
+  /**
+   *
+   */
+  static splitQuery(query: string): { category: string, text: string } {
+    let i = query.indexOf(':');
+    if (i === -1) return { category: '', text: query.trim() };
+    let category = query.slice(0, i).trim();
+    let text = query.slice(i + 1).trim();
+    return { category, text };
+  }
+
+  /**
+   *
+   */
+  static joinQuery(category: string, text: string): string {
+    return `${category.trim()}: ${text.trim()}`;
+  }
+
   /**
    * Search the palette model for matching commands.
    *

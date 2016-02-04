@@ -11,7 +11,7 @@ import * as arrays
   from 'phosphor-arrays';
 
 import {
-  AbstractPaletteModel, ISearchResult, SearchResultType
+  AbstractPaletteModel, ICommandResult, ISearchResult, SearchResultType
 } from './abstractmodel';
 
 import {
@@ -307,17 +307,85 @@ class StandardPaletteModel extends AbstractPaletteModel {
    * @returns An array of new search results for the query.
    */
   search(query: string): ISearchResult[] {
-    // //
-    // let { category, queryText } = Private.normalizeQuery(query);
+    //
+    let { category, text } = AbstractPaletteModel.splitQuery(query);
 
-    // //
-    // let items = Private.filterByCategory(this._items, category);
+    //
+    let items = Private.matchCategory(this._items, category);
 
-    // //
-    // let matches = Private.matchQueryText(items, queryText);
+    //
+    let matches = Private.matchText(items, text);
 
-    return [];
+    //
+    matches.sort(Private.matchSort);
+
+    //
+    return matches.map(match => ({
+      type: SearchResultType.Command,
+      value: Private.makeCommandResult(match),
+    }));
   }
 
   private _items: StandardPaletteItem[] = [];
+}
+
+
+/**
+ *
+ */
+namespace Private {
+  /**
+   *
+   */
+  export
+  interface IMatchItem {
+    item: StandardPaletteItem;
+    score: number;
+    indices: number[];
+  }
+
+  /**
+   *
+   */
+  export
+  function matchCategory(items: StandardPaletteItem[], category: string): StandardPaletteItem[] {
+    if (!category) return items;
+    let normed = category.toLowerCase();
+    return items.filter(item => item.category.toLowerCase() === normed);
+  }
+
+  /**
+   *
+   */
+  export
+  function matchText(items: StandardPaletteItem[], text: string): IMatchItem[] {
+    let matches: IMatchItem[] = [];
+    let query = text.replace(/\s/g, '').toLowerCase();
+    for (let item of items) {
+      let source = item.text.toLowerCase();
+      let match = StringSearch.sumOfSquares(source, query);
+      if (!match) continue;
+      let { score, indices } = match;
+      matches.push({ item, score: match.score, indices: match.indices });
+    }
+    return matches;
+  }
+
+  /**
+   *
+   */
+  export
+  function matchSort(a: IMatchItem, b: IMatchItem): number {
+    return a.score - b.score;
+  }
+
+  /**
+   *
+   */
+  export
+  function makeCommandResult(match: IMatchItem): ICommandResult {
+    let text = StringSearch.highlight(match.item.text, match.indices);
+    let { icon, caption, shortcut, className, handler, args } = match.item;
+    return { text, icon, caption, shortcut, className, handler, args };
+  }
 }

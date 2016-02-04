@@ -96,12 +96,7 @@ body {
 
 
 .p-CommandPalette-item.p-mod-active {
-  color: white;
   background: #7FDBFF;
-}
-
-.p-CommandPalette-item.p-mod-active .p-CommandPalette-itemCaption {
-  color: white;
 }
 
 
@@ -113,6 +108,13 @@ body {
 .p-CommandPalette-item[data-index]:hover,
 .p-CommandPalette-header[data-index]:hover {
   background: #DDDDDD;
+}
+
+
+.p-CommandPalette-itemText > em {
+  font-style: normal;
+  font-weight: bold;
+  color: #303030;
 }
 
 

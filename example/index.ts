@@ -12,10 +12,6 @@ import {
 } from 'phosphor-boxpanel';
 
 import {
-  ICommand
-} from 'phosphor-command';
-
-import {
  CommandPalette, IStandardPaletteItemOptions, StandardPaletteModel
 } from 'phosphor-commandpalette';
 
@@ -37,20 +33,11 @@ const palettes = new BoxPanel();
 
 var timeout: number;
 
-const logCommand: ICommand = {
-
-  execute: (args: any) => {
-    if (timeout) clearTimeout(timeout);
-    output.node.textContent = args.caption || args.text;
-    timeout = setTimeout(() => { output.node.textContent = ''; }, 3000);
-  },
-
-  isEnabled: (args) => {
-    let first = (args as any).text[0].toLocaleLowerCase();
-    // If the title's letter is N through Z.
-    return first.charCodeAt(0) > 109;
-  },
-};
+function logHandler(args: any): void {
+  if (timeout) clearTimeout(timeout);
+  output.node.textContent = args.caption || args.text;
+  timeout = setTimeout(() => { output.node.textContent = ''; }, 3000);
+}
 
 
 const p1ItemOptions = [
@@ -87,9 +74,9 @@ const p2ItemOptions = [
 
 
 function createItemOpts(category: string, text: string, caption: string): IStandardPaletteItemOptions {
-  let command = logCommand;
+  let handler = logHandler;
   let args = { text, caption };
-  return { text, caption, category, command, args };
+  return { text, caption, category, handler, args };
 }
 
 
