@@ -49,7 +49,7 @@ namespace StringSearch {
    */
   export
   function highlight(sourceText: string, indices: number[]): string {
-    if (!indices.length) return sourceText;
+    if (!indices) return sourceText;
     let last = 0;
     let result = '';
     for (let i of indices) {
@@ -88,7 +88,7 @@ namespace StringSearch {
     let result: IStringSearchResult = { score: 0, indices: [] };
     for (let i = 0, j = 0, n = queryText.length; i < n; ++i, ++j) {
       j = sourceText.indexOf(queryText[i], j);
-      if (j === -1) return { score: -1, indices: [] };
+      if (j === -1) return { score: -1, indices: null };
       result.indices.push(j);
       result.score += j * j;
     }
