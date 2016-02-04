@@ -8,6 +8,10 @@
 'use strict';
 
 import {
+  ICommand
+} from 'phosphor-command';
+
+import {
   Message
 } from 'phosphor-messaging';
 
@@ -253,6 +257,7 @@ class CommandPalette extends Widget {
   constructor() {
     super();
     this.addClass(PALETTE_CLASS);
+    ICommand.isEnabledChanged.connect(this._onCommandEnabledChanged, this);
   }
 
   /**
@@ -260,6 +265,7 @@ class CommandPalette extends Widget {
    */
   dispose(): void {
     this._model = null;
+    ICommand.isEnabledChanged.disconnect(this._onCommandEnabledChanged, this);
     super.dispose();
   }
 
@@ -548,6 +554,9 @@ class CommandPalette extends Widget {
     this.update();
   }
 
+  /**
+   * Execute the command or category search associated with a palette node.
+   */
   private _execute(target: HTMLElement): void {
     let { type, value } = this._buffer[parseInt(target.dataset['index'], 10)];
     switch (type) {
@@ -571,6 +580,34 @@ class CommandPalette extends Widget {
   private _findActiveNode(): HTMLElement {
     let selector = `.${ACTIVE_CLASS}`;
     return this.contentNode.querySelector(selector) as HTMLElement;
+  }
+
+  /**
+   * Signal handler for `ICommand` enabled change signal.
+   */
+  private _onCommandEnabledChanged(sender: any, command: ICommand): void {
+    let indices: number[] = [];
+    for (let i = 0; i < this._buffer.length; ++i) {
+      let { type, value } = this._buffer[i];
+      if (type === SearchResultType.Header) continue;
+      if ((value as ICommandResult).command !== command) continue;
+      indices.push(i);
+    }
+    if (!indices.length) return;
+    let selector = `.${HEADER_CLASS}, .${ITEM_CLASS}`;
+    let nodes = this.contentNode.querySelectorAll(selector);
+    for (let i = 0; i < indices.length; ++i) {
+      let index = indices[i];
+      let node = nodes[index];
+      let args =(this._buffer[index].value as ICommandResult).args;
+      if (command.isEnabled(args)) {
+        node.classList.remove(DISABLED_CLASS);
+        (node as HTMLElement).dataset['index'] = `${index}`;
+      } else {
+        node.classList.add(DISABLED_CLASS);
+        delete (node as HTMLElement).dataset['index'];
+      }
+    }
   }
 
   /**
