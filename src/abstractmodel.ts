@@ -8,10 +8,6 @@
 'use strict';
 
 import {
-  ICommand
-} from 'phosphor-command';
-
-import {
   ISignal, Signal
 } from 'phosphor-signaling';
 
@@ -110,18 +106,12 @@ interface ICommandResult {
   className: string;
 
   /**
-   * The command to execute when the item is clicked.
-   *
-   * #### Notes
-   * Thid value cannot be `null`.
+   * The handler function to execute when the item is clicked.
    */
-  command: ICommand;
+  handler: (args: any) => void;
 
   /**
-   * The arguments to pass to the command.
-   *
-   * #### Notes
-   * This should be `null` if the command does not require arguments.
+   * The arguments to pass to the handler.
    */
   args: any;
 }

@@ -11,10 +11,6 @@ import * as arrays
   from 'phosphor-arrays';
 
 import {
-  ICommand
-} from 'phosphor-command';
-
-import {
   AbstractPaletteModel, ISearchResult, SearchResultType
 } from './abstractmodel';
 
@@ -28,7 +24,7 @@ import {
  */
 export
 interface IStandardPaletteItemOptions {
-  /*
+  /**
    * The text for the item.
    *
    * #### Notes
@@ -37,18 +33,18 @@ interface IStandardPaletteItemOptions {
   text: string;
 
   /**
-   * The command for the item.
+   * The handler function for the item.
    *
    * #### Notes
-   * This should not be `null`.
+   * This will be invoked when an item is clicked by the user.
    */
-  command: ICommand;
+  handler: (args: any) => void;
 
   /**
-   * The arguments for the command, if any.
+   * The arguments for the handler, if necessary.
    *
    * #### Notes
-   * If not provided, `null` will be used for the arguments.
+   * If this is not provided, `undefined` will be used for the args.
    */
   args?: any;
 
@@ -111,8 +107,8 @@ class StandardPaletteItem {
    */
   constructor(options: IStandardPaletteItemOptions) {
     this._text = options.text;
-    this._command = options.command;
-    this._args = options.args || null;
+    this._args = options.args;
+    this._handler = options.handler;
     this._icon = options.icon || '';
     this._caption = options.caption || '';
     this._shortcut = options.shortcut || '';
@@ -181,17 +177,17 @@ class StandardPaletteItem {
   }
 
   /**
-   * Get the command for the item.
+   * Get the handler function for the item.
    *
    * #### Notes
    * This is a read-only property.
    */
-  get command(): ICommand {
-    return this._command;
+  get handler(): (args: any) => void {
+    return this._handler;
   }
 
   /**
-   * Get the arguments for the command.
+   * Get the arguments for the handler.
    *
    * #### Notes
    * This is a read-only property.
@@ -200,14 +196,14 @@ class StandardPaletteItem {
     return this._args;
   }
 
+  private _args: any;
   private _text: string;
   private _icon: string;
   private _caption: string;
   private _shortcut: string;
   private _category: string;
   private _className: string;
-  private _command: ICommand;
-  private _args: any;
+  private _handler: (args: any) => void;
 }
 
 
@@ -301,41 +297,27 @@ class StandardPaletteModel extends AbstractPaletteModel {
   }
 
   /**
+   * Search the palette model for matching commands.
    *
+   * @param query - The query text to match against the model items.
+   *   The query should take the form `(<category>:)?<text>`. If a
+   *   category is specified, the search will be limited to items
+   *   which match the category.
+   *
+   * @returns An array of new search results for the query.
    */
   search(query: string): ISearchResult[] {
-    // TODO handle categories and markup
-    // This is just a dumb search for now
+    // //
+    // let { category, queryText } = Private.normalizeQuery(query);
 
-    query = query.toLowerCase();
+    // //
+    // let items = Private.filterByCategory(this._items, category);
 
-    let matches: IMatch[] = [];
-    for (let item of this._items) {
-      let text = item.text.toLowerCase();
-      let match = StringSearch.sumOfSquares(text, query);
-      if (match) matches.push({ score: match.score, item });
-    }
+    // //
+    // let matches = Private.matchQueryText(items, queryText);
 
-    matches.sort(matchSort);
-
-    return matches.map(match => ({
-      type: SearchResultType.Command,
-      value: match.item,
-    }));
+    return [];
   }
 
   private _items: StandardPaletteItem[] = [];
-}
-
-
-// TODO
-interface IMatch {
-  score: number;
-  item: StandardPaletteItem;
-}
-
-
-// TODO
-function matchSort(a: IMatch, b: IMatch): number {
-  return a.score - b.score;
 }

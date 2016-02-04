@@ -8,10 +8,6 @@
 'use strict';
 
 import {
-  ICommand
-} from 'phosphor-command';
-
-import {
   Message
 } from 'phosphor-messaging';
 
@@ -94,11 +90,6 @@ const ITEM_SHORTCUT_CLASS = 'p-CommandPalette-itemShortcut';
  *
  */
 const ITEM_CAPTION_CLASS = 'p-CommandPalette-itemCaption';
-
-/**
- * The class name added to a disabled palette item.
- */
-const DISABLED_CLASS = 'p-mod-disabled';
 
 /**
  * The class name added to the active palette item.
@@ -228,9 +219,7 @@ class CommandPalette extends Widget {
 
     let itemClass = ITEM_CLASS;
     let extraItem = data.className;
-    let disabled = !data.command.isEnabled(data.args);
     if (extraItem) itemClass += ' ' + extraItem;
-    if (disabled) itemClass += ' ' + DISABLED_CLASS;
     node.className = itemClass;
 
     let iconClass = ITEM_ICON_CLASS;
@@ -257,7 +246,6 @@ class CommandPalette extends Widget {
   constructor() {
     super();
     this.addClass(PALETTE_CLASS);
-    ICommand.isEnabledChanged.connect(this._onCommandEnabledChanged, this);
   }
 
   /**
@@ -265,7 +253,6 @@ class CommandPalette extends Widget {
    */
   dispose(): void {
     this._model = null;
-    ICommand.isEnabledChanged.disconnect(this._onCommandEnabledChanged, this);
     super.dispose();
   }
 
@@ -395,15 +382,13 @@ class CommandPalette extends Widget {
       let { type, value } = result[i];
       switch (type) {
       case SearchResultType.Header:
-        let hasQuery = !!(value as IHeaderResult).queryPrefix;
-        node = ctor.createHeaderNode(value as IHeaderResult);
-        if (hasQuery) node.dataset['index'] = `${i}`;
+        let header = value as IHeaderResult;
+        node = ctor.createHeaderNode(header);
+        if (header.category) node.dataset['index'] = `${i}`;
         break;
       case SearchResultType.Command:
-        let command = (value as ICommandResult).command;
-        let args = (value as ICommandResult).args;
         node = ctor.createItemNode(value as ICommandResult);
-        if (command.isEnabled(args)) node.dataset['index'] = `${i}`;
+        node.dataset['index'] = `${i}`;
         break;
       default:
         throw new Error('invalid search result type');
@@ -446,15 +431,14 @@ class CommandPalette extends Widget {
    */
   private _activateFirst(): void {
     let nodes = this.contentNode.querySelectorAll('[data-index]');
-    // If the palette contains any enabled items, activate the first one.
+    // If the palette contains any items, activate the first one.
     if (nodes.length) {
       // Scroll all the way to the top of the content node.
       this.contentNode.scrollTop = 0;
       let target = nodes[0] as HTMLElement;
-      // Test if the first enabled item is visible.
+      // Test if the first item is visible.
       let scrollIntoView = scrollTest(this.contentNode, target);
-      let alignToTop = true;
-      this._activateNode(target, scrollIntoView, alignToTop);
+      this._activateNode(target, scrollIntoView, true);
     }
   }
 
@@ -463,15 +447,14 @@ class CommandPalette extends Widget {
    */
   private _activateLast(): void {
     let nodes = this.contentNode.querySelectorAll('[data-index]');
-    // If the palette contains any enabled items, activate the last one.
+    // If the palette contains any items, activate the last one.
     if (nodes.length) {
       // Scroll all the way to the bottom of the content node.
       this.contentNode.scrollTop = this.contentNode.scrollHeight;
       let target = nodes[nodes.length - 1] as HTMLElement;
-      // Test if the last enabled item is visible.
+      // Test if the last item is visible.
       let scrollIntoView = scrollTest(this.contentNode, target);
-      let alignToTop = false;
-      this._activateNode(target, scrollIntoView, alignToTop);
+      this._activateNode(target, scrollIntoView, false);
     }
   }
 
@@ -513,8 +496,8 @@ class CommandPalette extends Widget {
     event.preventDefault();
     let target = event.target as HTMLElement;
     while (!target.hasAttribute('data-index')) {
-        if (target === this.node) return;
-        target = target.parentElement;
+      if (target === this.node) return;
+      target = target.parentElement;
     }
     this._execute(target);
   }
@@ -561,15 +544,15 @@ class CommandPalette extends Widget {
     let { type, value } = this._buffer[parseInt(target.dataset['index'], 10)];
     switch (type) {
     case SearchResultType.Header:
-      let prefix = (value as IHeaderResult).queryPrefix;
+      let { category } = value as IHeaderResult;
       let query = this.inputNode.value;
-      this.inputNode.value = prefix + query;
+      // TODO strip exisiting category from search
+      this.inputNode.value = `${category.trim()}: ${query}`;
       this.update();
       break;
     case SearchResultType.Command:
-      let command = (value as ICommandResult).command;
-      let args = (value as ICommandResult).args;
-      if (command.isEnabled(args)) command.execute(args);
+      let { handler, args } = value as ICommandResult;
+      handler(args);
       break;
     default:
       throw new Error('invalid search result type');
@@ -582,33 +565,6 @@ class CommandPalette extends Widget {
   private _findActiveNode(): HTMLElement {
     let selector = `.${ACTIVE_CLASS}`;
     return this.contentNode.querySelector(selector) as HTMLElement;
-  }
-
-  /**
-   * Signal handler for `ICommand` enabled change signal.
-   */
-  private _onCommandEnabledChanged(sender: any, command: ICommand): void {
-    let indices: number[] = [];
-    for (let i = 0; i < this._buffer.length; ++i) {
-      let { type, value } = this._buffer[i];
-      if (type === SearchResultType.Header) continue;
-      if ((value as ICommandResult).command !== command) continue;
-      indices.push(i);
-    }
-    if (!indices.length) return;
-    let selector = `.${HEADER_CLASS}, .${ITEM_CLASS}`;
-    let nodes = this.contentNode.querySelectorAll(selector);
-    for (let index of indices) {
-      let node = nodes[index];
-      let args =(this._buffer[index].value as ICommandResult).args;
-      if (command.isEnabled(args)) {
-        node.classList.remove(DISABLED_CLASS);
-        (node as HTMLElement).dataset['index'] = `${index}`;
-      } else {
-        node.classList.add(DISABLED_CLASS);
-        delete (node as HTMLElement).dataset['index'];
-      }
-    }
   }
 
   /**
