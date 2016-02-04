@@ -66,9 +66,12 @@ namespace StringSearch {
    *
    * @param queryText - The query text to locate in the source text.
    *
-   * @returns A score which indicates how strongly the query text matches
-   *   the source text. A lower score indicates a stronger match. Zero is
-   *   the lowest possible matched score. `-1` is returned for no match.
+   * @returns An `IStringSearchResult` value with a `score` which indicates
+   *   how strongly the query text matches the source text. A lower score
+   *   indicates a stronger match. Zero is the lowest possible matched score.
+   *   `-1` is returned for no match. Additionally, if there are matches, an
+   *   array of `indices` indicates the positions in the source text where
+   *   matches were found.
    *
    * #### Notes
    * This scoring algorithm uses a sum-of-squares approach to determine
