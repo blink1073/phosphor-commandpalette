@@ -561,8 +561,10 @@ class CommandPalette extends Widget {
     let { type, value } = this._buffer[parseInt(target.dataset['index'], 10)];
     switch (type) {
     case SearchResultType.Header:
-      let query = (value as IHeaderResult).queryPrefix;
-      console.log('category search', query);
+      let prefix = (value as IHeaderResult).queryPrefix;
+      let query = this.inputNode.value;
+      this.inputNode.value = prefix + query;
+      this.update();
       break;
     case SearchResultType.Command:
       let command = (value as ICommandResult).command;
