@@ -598,8 +598,7 @@ class CommandPalette extends Widget {
     if (!indices.length) return;
     let selector = `.${HEADER_CLASS}, .${ITEM_CLASS}`;
     let nodes = this.contentNode.querySelectorAll(selector);
-    for (let i = 0; i < indices.length; ++i) {
-      let index = indices[i];
+    for (let index of indices) {
       let node = nodes[index];
       let args =(this._buffer[index].value as ICommandResult).args;
       if (command.isEnabled(args)) {
