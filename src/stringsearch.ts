@@ -49,7 +49,6 @@ namespace StringSearch {
    */
   export
   function highlight(sourceText: string, indices: number[]): string {
-    if (!indices) return sourceText;
     let last = 0;
     let result = '';
     for (let i of indices) {
@@ -69,9 +68,8 @@ namespace StringSearch {
    * @returns An `IStringSearchResult` value with a `score` which indicates
    *   how strongly the query text matches the source text. A lower score
    *   indicates a stronger match. Zero is the lowest possible matched score.
-   *   `-1` is returned for no match. Additionally, if there are matches, an
-   *   array of `indices` indicates the positions in the source text where
-   *   matches were found.
+   *   Additionally, an array of `indices` indicates the positions in the
+   *   source text where matches were found. `null` is returned for no match.
    *
    * #### Notes
    * This scoring algorithm uses a sum-of-squares approach to determine
@@ -91,7 +89,7 @@ namespace StringSearch {
     let result: IStringSearchResult = { score: 0, indices: [] };
     for (let i = 0, j = 0, n = queryText.length; i < n; ++i, ++j) {
       j = sourceText.indexOf(queryText[i], j);
-      if (j === -1) return { score: -1, indices: null };
+      if (j === -1) return null;
       result.indices.push(j);
       result.score += j * j;
     }
