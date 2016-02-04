@@ -9,10 +9,56 @@
 
 
 /**
+ * The prefix that prepends a matched character in a search result.
+ */
+const PREFIX = '<em>';
+
+/**
+ * The suffix that affixed onto a matched character in a search result.
+ */
+const SUFFIX = '</em>';
+
+/**
  * A namespace which holds text scoring and matching functions.
  */
 export
 namespace StringSearch {
+  /**
+   * The result of a `StringSearch.sumOfSquares` search.
+   */
+  export
+  interface IStringSearchResult {
+    /**
+     * The search score, lower is better.
+     */
+    score: number;
+    /**
+     * The matching indices of the original string that coincide with the query.
+     */
+    indices: number[];
+  }
+
+  /**
+   * Highlight the matched characters of a source string.
+   *
+   * @param sourceText - The text which should be searched.
+   *
+   * @param indices - The indices of the matched characters.
+   *
+   * @returns a string with interpolated `<em>` tags for each matched index.
+   */
+  export
+  function highlight(sourceText: string, indices: number[]): string {
+    if (!indices.length) return sourceText;
+    let last = 0;
+    let result = '';
+    for (let i of indices) {
+      result += sourceText.slice(last, i) + PREFIX + sourceText[i] + SUFFIX;
+      last = i + 1;
+    }
+    return result + sourceText.slice(last);
+  }
+
   /**
    * Compute the sum-of-squares score for the given search text.
    *
@@ -38,13 +84,14 @@ namespace StringSearch {
    * This has a runtime complexity of `O(n)` on `sourceText`.
    */
   export
-  function sumOfSquares(sourceText: string, queryText: string): number {
-    let score = 0;
+  function sumOfSquares(sourceText: string, queryText: string): IStringSearchResult {
+    let result: IStringSearchResult = { score: 0, indices: [] };
     for (let i = 0, j = 0, n = queryText.length; i < n; ++i, ++j) {
       j = sourceText.indexOf(queryText[i], j);
-      if (j === -1) return -1;
-      score += j * j;
+      if (j === -1) return { score: -1, indices: [] };
+      result.indices.push(j);
+      result.score += j * j;
     }
-    return score;
+    return result;
   }
 }
