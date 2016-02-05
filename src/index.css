@@ -50,11 +50,11 @@
 }
 
 
-.p-CommandPalette-shortcut {
+.p-CommandPalette-itemShortcut {
   float: right;
 }
 
 
-.p-CommandPalette-caption {
+.p-CommandPalette-itemCaption {
   display: block;
 }

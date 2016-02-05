@@ -62,32 +62,32 @@ const HEADER_TEXT_CLASS = 'p-CommandPalette-headerText';
 const HEADER_ICON_CLASS = 'p-CommandPalette-headerIcon';
 
 /**
- *
+ * The class name added to a palette item.
  */
 const ITEM_CLASS = 'p-CommandPalette-item';
 
 /**
- *
+ * The class name added to item the wrapper around item text (excludes icon).
  */
 const ITEM_CONTENT_CLASS = 'p-CommandPalette-itemContent';
 
 /**
- *
+ * The class name added to item icons.
  */
 const ITEM_ICON_CLASS = 'p-CommandPalette-itemIcon';
 
 /**
- *
+ * The class name added to item titles.
  */
 const ITEM_TEXT_CLASS = 'p-CommandPalette-itemText';
 
 /**
- *
+ * The class name added to item shortcuts.
  */
 const ITEM_SHORTCUT_CLASS = 'p-CommandPalette-itemShortcut';
 
 /**
- *
+ * The class name added to item captions.
  */
 const ITEM_CAPTION_CLASS = 'p-CommandPalette-itemCaption';
 
@@ -358,30 +358,27 @@ class CommandPalette extends Widget {
    *
    */
   protected onUpdateRequest(msg: Message): void {
-    //
+    // Empty the content node.
     let content = this.contentNode;
     content.textContent = '';
 
-    //
+    // Bail if there is no model.
     if (!this._model) {
       return;
     }
 
-    //
-    let result = this._model.search(this.inputNode.value);
-
-    //
+    // Keep a local buffer containing search results.
+    let query = this.inputNode.value;
+    let result = this._model.search(query);
+    this._buffer = result;
     if (result.length === 0) {
       return;
     }
 
-    this._buffer = result;
-
-    //
+    // Create a document fragment that will populate the content node.
     let fragment = document.createDocumentFragment();
     let ctor = this.constructor as typeof CommandPalette;
 
-    //
     for (let i = 0, n = result.length; i < n; ++i) {
       let node: HTMLElement;
       let { type, value } = result[i];
@@ -401,8 +398,14 @@ class CommandPalette extends Widget {
       fragment.appendChild(node);
     }
 
-    //
     content.appendChild(fragment);
+
+    // If the results were from a search, highlight the first item.
+    if (query.length) {
+      let selector = `.${ITEM_CLASS}`;
+      let target = this.contentNode.querySelector(selector) as HTMLElement;
+      this._activateNode(target);
+    }
   }
 
   /**
@@ -413,8 +416,12 @@ class CommandPalette extends Widget {
   private _activate(direction: ScrollDirection): void {
     let active = this._findActiveNode();
     if (!active) {
-      if (direction === ScrollDirection.Down) return this._activateFirst();
-      if (direction === ScrollDirection.Up) return this._activateLast();
+      if (direction === ScrollDirection.Down) {
+        return this._activateFirst();
+      }
+      if (direction === ScrollDirection.Up) {
+        return this._activateLast();
+      }
     }
     let nodes = this.contentNode.querySelectorAll('[data-index]');
     let current = Array.prototype.indexOf.call(nodes, active);
@@ -424,7 +431,9 @@ class CommandPalette extends Widget {
     } else {
       newActive = current < nodes.length - 1 ? current + 1 : 0;
     }
-    if (newActive === 0) return this._activateFirst();
+    if (newActive === 0) {
+      return this._activateFirst();
+    }
     let target = nodes[newActive] as HTMLElement;
     let scrollIntoView = scrollTest(this.contentNode, target);
     let alignToTop = direction === ScrollDirection.Up;
@@ -474,7 +483,9 @@ class CommandPalette extends Widget {
    */
   private _activateNode(target: HTMLElement, scrollIntoView?: boolean, alignToTop?: boolean): void {
     let active = this._findActiveNode();
-    if (target === active) return;
+    if (target === active) {
+      return;
+    }
     if (active) this._deactivate();
     target.classList.add(ACTIVE_CLASS);
     if (scrollIntoView) target.scrollIntoView(alignToTop);
@@ -496,12 +507,16 @@ class CommandPalette extends Widget {
    */
   private _evtClick(event: MouseEvent): void {
     let { altKey, ctrlKey, metaKey, shiftKey } = event;
-    if (event.button !== 0 || altKey || ctrlKey || metaKey || shiftKey) return;
+    if (event.button !== 0 || altKey || ctrlKey || metaKey || shiftKey) {
+      return;
+    }
     event.stopPropagation();
     event.preventDefault();
     let target = event.target as HTMLElement;
     while (!target.hasAttribute('data-index')) {
-      if (target === this.node) return;
+      if (target === this.node) {
+        return;
+      }
       target = target.parentElement;
     }
     this._execute(target);
@@ -513,36 +528,54 @@ class CommandPalette extends Widget {
   private _evtKeyDown(event: KeyboardEvent): void {
     let { altKey, ctrlKey, metaKey, keyCode } = event;
     // Ignore system keyboard shortcuts.
-    if (altKey || ctrlKey || metaKey) return;
-    if (!FN_KEYS.hasOwnProperty(`${keyCode}`)) return;
-    // If escape key is pressed and nothing is active, allow propagation.
+    if (altKey || ctrlKey || metaKey) {
+      return;
+    }
+    // Allow all normal (non-navigation) keystrokes to propagate.
+    if (!FN_KEYS.hasOwnProperty(`${keyCode}`)) {
+      return;
+    }
     if (keyCode === ESCAPE) {
-      let { category, text } = AbstractPaletteModel.splitQuery(this.inputNode.value);
-      event.preventDefault();
-      event.stopPropagation();
+      let inputValue = this.inputNode.value;
+      let { category, text } = AbstractPaletteModel.splitQuery(inputValue);
+      // If escape key is pressed and category exists, stop propagation.
       if (category) {
+        event.preventDefault();
+        event.stopPropagation();
+        // Remove the category and leave the search query intact.
         this.inputNode.value = text;
         this.inputNode.focus();
         this.update();
         return;
       }
+      // If escape key is pressed and text exists, stop propagation.
       if (text) {
+        event.preventDefault();
+        event.stopPropagation();
+        // Remove the search query, resetting the palette.
         this.inputNode.value = '';
         this.inputNode.focus();
         this.update();
         return;
       }
+      // If escape key is pressed and results in no search action, propagate.
       this._deactivate();
       this.inputNode.blur();
       return;
     }
     event.preventDefault();
     event.stopPropagation();
-    if (keyCode === UP_ARROW) return this._activate(ScrollDirection.Up);
-    if (keyCode === DOWN_ARROW) return this._activate(ScrollDirection.Down);
+    if (keyCode === UP_ARROW) {
+      return this._activate(ScrollDirection.Up);
+    }
+    if (keyCode === DOWN_ARROW) {
+      return this._activate(ScrollDirection.Down);
+    }
     if (keyCode === ENTER) {
       let active = this._findActiveNode();
-      if (!active) return;
+      if (!active) {
+        return;
+      }
       this._execute(active);
       this._deactivate();
       return;
