@@ -46,11 +46,18 @@ const p1ItemOptions = [
   createItemOpts('Ancient near east', 'Hittites', 'The Hittite empire'),
   createItemOpts('Ancient near east', 'Egypt', 'The Egyptian empire'),
   createItemOpts('Ancient near east', 'Persia', 'The Persian empire'),
+
   createItemOpts('Ancient Mesoamerica', 'Olmecs', 'The Olmec empire'),
   createItemOpts('Ancient Mesoamerica', 'Aztecs', 'The Aztec empire'),
   createItemOpts('Ancient Mesoamerica', 'Mayans', 'The Mayan empire'),
-  createItemOpts('Ancient South American', 'Chimú', 'The Chimú culture'),
-  createItemOpts('Ancient South American', 'Inca', 'The Incan empire')
+
+  createItemOpts('Ancient South America', 'Tiwanaku', 'The Tiwanaku'),
+  createItemOpts('Ancient South America', 'Chimú', 'The Chimú culture'),
+  createItemOpts('Ancient South America', 'Inca', 'The Incan empire'),
+
+  createItemOpts('Ancient Africa', 'Carthage', 'The Carthaginian empire'),
+  createItemOpts('Ancient Africa', 'Numidia', 'The kingdom of Numidia'),
+  createItemOpts('Ancient Africa', 'Kush', 'The kushite empire')
 ];
 
 
@@ -60,17 +67,64 @@ const p2ItemOptions = [
   createItemOpts('Romance languages', 'French', 'le français'),
   createItemOpts('Romance languages', 'Spanish', 'español'),
   createItemOpts('Romance languages', 'Portuguese', 'língua portuguesa'),
+  createItemOpts('Romance languages', 'Romansh', 'Romansh'),
+  createItemOpts('Romance languages', 'Sicilian', 'lingua siciliana'),
+  createItemOpts('Romance languages', 'Walloon', 'Walon'),
+  createItemOpts('Romance languages', 'Catalan', 'català'),
+  createItemOpts('Romance languages', 'Corsican', 'lingua corsa'),
+
+  createItemOpts('Semitic languages', 'Arabic', 'العَرَبِية'),
+  createItemOpts('Semitic languages', 'Amharic', 'አማርኛ'),
+  createItemOpts('Semitic languages', 'Hebrew', 'עברית'),
+  createItemOpts('Semitic languages', 'Tigrinya', 'ትግርኛ'),
+  createItemOpts('Semitic languages', 'Tigrinya', 'ትግርኛ'),
+
+  createItemOpts('Japonic languages', 'Japanese', '日本語'),
+  createItemOpts('Japonic languages', 'Ryukyuan languages', '琉球語派'),
+
+  createItemOpts('Algonquian languages', 'Arapaho', 'Hinónoʼeitíít'),
+  createItemOpts('Algonquian languages', 'Ojibwe', 'ᐊᓂᔑᓈᐯᒧᐎᓐ'),
+  createItemOpts('Algonquian languages', 'Massachusett', 'Massachusett'),
+  createItemOpts('Algonquian languages', 'Unami', 'Unami'),
+
+  createItemOpts('Iranian languages', 'Persian', 'فارسی'),
+  createItemOpts('Iranian languages', 'Pashto', 'پښتو'),
+  createItemOpts('Iranian languages', 'Kurdish', 'کوردی'),
+  createItemOpts('Iranian languages', 'Balochi', 'بلوچی'),
+
+  createItemOpts('Turkic languages', 'Turkish', 'Türkçe'),
+  createItemOpts('Turkic languages', 'Azeri', 'Азәрбајҹан дили'),
+  createItemOpts('Turkic languages', 'Uzbek', 'Oʻzbekcha'),
+  createItemOpts('Turkic languages', 'Kazakh', 'قازاق ٴتىلى'),
+
+  createItemOpts('Sino-Tibetan languages', 'Mandarin', '官话'),
+  createItemOpts('Sino-Tibetan languages', 'Wu', '吴语'),
+  createItemOpts('Sino-Tibetan languages', 'Min', '闽语'),
+  createItemOpts('Sino-Tibetan languages', 'Cantonese', '广东话'),
+  createItemOpts('Sino-Tibetan languages', 'Standard Tibetan', 'ལྷ་སའི་སྐད'),
+  createItemOpts('Sino-Tibetan languages', 'Burmese', 'မြန်မာဘာသာ'),
+
   createItemOpts('Germanic languages', 'German', 'Deutsch'),
   createItemOpts('Germanic languages', 'English', 'English'),
+  createItemOpts('Germanic languages', 'Scots', 'Scots'),
+  createItemOpts('Germanic languages', 'Faroese', 'føroyskt'),
+  createItemOpts('Germanic languages', 'Afrikaans', 'Afrikaans'),
+  createItemOpts('Germanic languages', 'North Frisian', 'North Frisian'),
+  createItemOpts('Germanic languages', 'West Frisian', 'West Frisian'),
+  createItemOpts('Germanic languages', 'Saterland Frisian', 'Saterland Frisian'),
   createItemOpts('Germanic languages', 'Danish', 'dansk sprog'),
   createItemOpts('Germanic languages', 'Swedish', 'svenska'),
   createItemOpts('Germanic languages', 'Icelandic', 'íslenska'),
   createItemOpts('Germanic languages', 'Norwegian', 'norsk'),
   createItemOpts('Germanic languages', 'Dutch', 'Nederlands'),
-  createItemOpts('Language isolates', 'Basque', 'Euskara'),
-  createItemOpts('Language isolates', 'Korean', '한국어/조선말')
-];
 
+  createItemOpts('Language isolates', 'Basque', 'Euskara'),
+  createItemOpts('Language isolates', 'Korean', '한국어/조선말'),
+  createItemOpts('Language isolates', 'Bangime', 'Baŋgɛri-mɛ'),
+  createItemOpts('Language isolates', 'Hadza', 'Hazane'),
+  createItemOpts('Language isolates', 'Sandawe', 'Sandaweeki'),
+  createItemOpts('Language isolates', 'Ainu', 'アィヌ')
+];
 
 
 function createItemOpts(category: string, text: string, caption: string): IStandardPaletteItemOptions {
