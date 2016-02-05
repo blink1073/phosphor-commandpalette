@@ -11,7 +11,7 @@ import * as arrays
   from 'phosphor-arrays';
 
 import {
-  AbstractPaletteModel, ICommandResult, ISearchResult, SearchResultType
+  AbstractPaletteModel, ISearchResult, SearchResultType
 } from './abstractmodel';
 
 import {
