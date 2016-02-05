@@ -314,16 +314,21 @@ class StandardPaletteModel extends AbstractPaletteModel {
     let items = Private.matchCategory(this._items, category);
 
     //
-    let matches = Private.matchText(items, text);
+    let matches = Private.matchText(items, text).sort(Private.matchSort);
 
     //
-    matches.sort(Private.matchSort);
+    let groups = Private.groupCategories(matches);
 
     //
-    return matches.map(match => ({
-      type: SearchResultType.Command,
-      value: Private.makeCommandResult(match),
-    }));
+    let result: ISearchResult[] = [];
+    for (let category in groups) {
+      result.push({ type: SearchResultType.Header, value: { text: category, category, className: '' } });
+      for (let item of groups[category]) {
+        result.push({ type: SearchResultType.Command, value: Private.makeCommandResult(item) });
+      }
+    }
+
+    return result;
   }
 
   private _items: StandardPaletteItem[] = [];
@@ -387,5 +392,23 @@ namespace Private {
     let text = StringSearch.highlight(match.item.text, match.indices);
     let { icon, caption, shortcut, className, handler, args } = match.item;
     return { text, icon, caption, shortcut, className, handler, args };
+  }
+
+  export
+  interface IMatchGroups {
+    [category: string]: IMatchItem[];
+  }
+
+  /**
+   *
+   */
+  export
+  function groupCategories(items: IMatchItem[]): IMatchGroups {
+    let groups: IMatchGroups = Object.create(null);
+    for (let item of items) {
+      let category = item.item.category;
+      (groups[category] || (groups[category] = [])).push(item);
+    }
+    return groups;
   }
 }
