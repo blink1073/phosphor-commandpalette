@@ -363,12 +363,17 @@ class CommandPalette extends Widget {
     content.textContent = '';
 
     // Bail if there is no model.
-    if (!this._model) return;
+    if (!this._model) {
+      return;
+    }
 
     // Keep a local buffer containing search results.
-    let result = this._model.search(this.inputNode.value);
+    let query = this.inputNode.value;
+    let result = this._model.search(query);
     this._buffer = result;
-    if (result.length === 0) return;
+    if (result.length === 0) {
+      return;
+    }
 
     // Create a document fragment that will populate the content node.
     let fragment = document.createDocumentFragment();
@@ -394,6 +399,13 @@ class CommandPalette extends Widget {
     }
 
     content.appendChild(fragment);
+
+    // If the results were from a search, highlight the first item.
+    if (query.length) {
+      let selector = `.${ITEM_CLASS}`;
+      let target = this.contentNode.querySelector(selector) as HTMLElement;
+      this._activateNode(target);
+    }
   }
 
   /**
@@ -404,8 +416,12 @@ class CommandPalette extends Widget {
   private _activate(direction: ScrollDirection): void {
     let active = this._findActiveNode();
     if (!active) {
-      if (direction === ScrollDirection.Down) return this._activateFirst();
-      if (direction === ScrollDirection.Up) return this._activateLast();
+      if (direction === ScrollDirection.Down) {
+        return this._activateFirst();
+      }
+      if (direction === ScrollDirection.Up) {
+        return this._activateLast();
+      }
     }
     let nodes = this.contentNode.querySelectorAll('[data-index]');
     let current = Array.prototype.indexOf.call(nodes, active);
@@ -415,7 +431,9 @@ class CommandPalette extends Widget {
     } else {
       newActive = current < nodes.length - 1 ? current + 1 : 0;
     }
-    if (newActive === 0) return this._activateFirst();
+    if (newActive === 0) {
+      return this._activateFirst();
+    }
     let target = nodes[newActive] as HTMLElement;
     let scrollIntoView = scrollTest(this.contentNode, target);
     let alignToTop = direction === ScrollDirection.Up;
@@ -465,7 +483,9 @@ class CommandPalette extends Widget {
    */
   private _activateNode(target: HTMLElement, scrollIntoView?: boolean, alignToTop?: boolean): void {
     let active = this._findActiveNode();
-    if (target === active) return;
+    if (target === active) {
+      return;
+    }
     if (active) this._deactivate();
     target.classList.add(ACTIVE_CLASS);
     if (scrollIntoView) target.scrollIntoView(alignToTop);
@@ -487,12 +507,16 @@ class CommandPalette extends Widget {
    */
   private _evtClick(event: MouseEvent): void {
     let { altKey, ctrlKey, metaKey, shiftKey } = event;
-    if (event.button !== 0 || altKey || ctrlKey || metaKey || shiftKey) return;
+    if (event.button !== 0 || altKey || ctrlKey || metaKey || shiftKey) {
+      return;
+    }
     event.stopPropagation();
     event.preventDefault();
     let target = event.target as HTMLElement;
     while (!target.hasAttribute('data-index')) {
-      if (target === this.node) return;
+      if (target === this.node) {
+        return;
+      }
       target = target.parentElement;
     }
     this._execute(target);
@@ -504,9 +528,13 @@ class CommandPalette extends Widget {
   private _evtKeyDown(event: KeyboardEvent): void {
     let { altKey, ctrlKey, metaKey, keyCode } = event;
     // Ignore system keyboard shortcuts.
-    if (altKey || ctrlKey || metaKey) return;
+    if (altKey || ctrlKey || metaKey) {
+      return;
+    }
     // Allow all normal (non-navigation) keystrokes to propagate.
-    if (!FN_KEYS.hasOwnProperty(`${keyCode}`)) return;
+    if (!FN_KEYS.hasOwnProperty(`${keyCode}`)) {
+      return;
+    }
     if (keyCode === ESCAPE) {
       let inputValue = this.inputNode.value;
       let { category, text } = AbstractPaletteModel.splitQuery(inputValue);
@@ -541,7 +569,9 @@ class CommandPalette extends Widget {
     if (keyCode === DOWN_ARROW) return this._activate(ScrollDirection.Down);
     if (keyCode === ENTER) {
       let active = this._findActiveNode();
-      if (!active) return;
+      if (!active) {
+        return;
+      }
       this._execute(active);
       this._deactivate();
       return;
