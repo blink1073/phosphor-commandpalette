@@ -34,20 +34,18 @@ body {
 
 
 .p-CommandPalette {
-  background: #EEEEEE;
+  background: #F5F5F5;
   border: 1px solid #CCCCCC;
-  padding: 8px 8px 0px 8px;
 }
 
 
 .p-CommandPalette-search {
-  margin-bottom: 4px;
+  padding: 8px;
 }
 
 
 .p-CommandPalette-inputWrapper {
   border: 1px solid #E0E0E0;
-  border-radius: 20px;
   background: white;
   padding: 4px 6px;
 }
@@ -63,22 +61,11 @@ body {
 
 .p-CommandPalette-header {
   color: #757575;
-  padding: 4px 0px;
+  padding: 8px 0px;
   font-size: 12px;
-  font-weight: 500;
-}
-
-
-.p-CommandPalette-header:hover {
-  background: #DDDDDD;
-}
-
-
-.p-CommandPalette-header:after {
-  display: block;
-  content: '';
-  margin-top: 2px;
-  border-bottom: 1px solid #BBBBBB;
+  font-weight: 600;
+  background: #E1E1E1;
+  cursor: pointer;
 }
 
 
@@ -91,23 +78,17 @@ body {
   color: #757575;
   font-weight: 500;
   font-size: 13px;
-  padding: 4px;
+  padding: 4px 8px;
 }
 
-
+.p-CommandPalette-header.p-mod-active,
 .p-CommandPalette-item.p-mod-active {
   background: #7FDBFF;
 }
 
 
-.p-CommandPalette-item.p-mod-disabled {
-  color: #D5D5D5;
-}
-
-
-.p-CommandPalette-item[data-index]:hover,
-.p-CommandPalette-header[data-index]:hover {
-  background: #DDDDDD;
+.p-CommandPalette-item:hover:not(.p-mod-active) {
+  background: #EBEBEB;
 }
 
 

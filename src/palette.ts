@@ -328,6 +328,9 @@ class CommandPalette extends Widget {
     case 'input':
       this._evtInput(event);
       break;
+    case 'blur':
+      this._deactivate();
+      break;
     }
   }
 
@@ -338,6 +341,7 @@ class CommandPalette extends Widget {
     this.node.addEventListener('click', this);
     this.node.addEventListener('keydown', this);
     this.node.addEventListener('input', this);
+    this.inputNode.addEventListener('blur', this);
   }
 
   /**
@@ -347,6 +351,7 @@ class CommandPalette extends Widget {
     this.node.removeEventListener('click', this);
     this.node.removeEventListener('keydown', this);
     this.node.removeEventListener('input', this);
+    this.inputNode.removeEventListener('blur', this);
   }
 
   /**
@@ -512,10 +517,24 @@ class CommandPalette extends Widget {
     if (!FN_KEYS.hasOwnProperty(`${keyCode}`)) return;
     // If escape key is pressed and nothing is active, allow propagation.
     if (keyCode === ESCAPE) {
-      if (!this._findActiveNode()) return;
+      let { category, text } = AbstractPaletteModel.splitQuery(this.inputNode.value);
       event.preventDefault();
       event.stopPropagation();
-      return this._deactivate();
+      if (category) {
+        this.inputNode.value = text;
+        this.inputNode.focus();
+        this.update();
+        return;
+      }
+      if (text) {
+        this.inputNode.value = '';
+        this.inputNode.focus();
+        this.update();
+        return;
+      }
+      this._deactivate();
+      this.inputNode.blur();
+      return;
     }
     event.preventDefault();
     event.stopPropagation();
@@ -545,9 +564,9 @@ class CommandPalette extends Widget {
     switch (type) {
     case SearchResultType.Header:
       let { category } = value as IHeaderResult;
-      let query = this.inputNode.value;
-      // TODO strip exisiting category from search
-      this.inputNode.value = `${category.trim()}: ${query}`;
+      let { text } = AbstractPaletteModel.splitQuery(this.inputNode.value);
+      this.inputNode.value = `${category.trim()}: ${text}`;
+      this.inputNode.focus();
       this.update();
       break;
     case SearchResultType.Command:
