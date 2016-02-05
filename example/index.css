@@ -71,6 +71,7 @@ body {
 
 .p-CommandPalette-headerText {
   margin-left: 4px;
+  text-transform: capitalize;
 }
 
 
