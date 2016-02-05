@@ -113,7 +113,7 @@ class StandardPaletteItem {
     this._caption = options.caption || '';
     this._shortcut = options.shortcut || '';
     this._className = options.className || '';
-    this._category = options.category || '';
+    this._category = Private.normalizeCategory(options.category || '');
   }
 
   /**
@@ -311,24 +311,61 @@ class StandardPaletteModel extends AbstractPaletteModel {
     let { category, text } = AbstractPaletteModel.splitQuery(query);
 
     //
-    let items = Private.matchCategory(this._items, category);
-
-    //
-    let matches = Private.matchText(items, text).sort(Private.matchSort);
-
-    //
-    let groups = Private.groupCategories(matches);
-
-    //
-    let result: ISearchResult[] = [];
-    for (let category in groups) {
-      result.push({ type: SearchResultType.Header, value: { text: category, category, className: '' } });
-      for (let item of groups[category]) {
-        result.push({ type: SearchResultType.Command, value: Private.makeCommandResult(item) });
-      }
+    if (category) {
+      return this._searchByCategory(category, text);
     }
 
-    return result;
+    //
+    if (text) {
+      return this._searchByText(text);
+    }
+
+    //
+    return this._defaultSearchResults();
+  }
+
+  /**
+   *
+   */
+  private _searchByCategory(category: string, text: string): ISearchResult[] {
+    return [];
+  }
+
+  /**
+   *
+   */
+  private _searchByText(text: string): ISearchResult[] {
+    //
+    let chars = Private.normalizeSearchChars(text);
+
+    //
+    let scores = Private.matchTextChars(this._items, chars);
+
+    //
+    scores.sort(Private.textScoreCmp);
+
+    //
+    let map = Private.groupTextScores(scores);
+
+    //
+    return Private.renderTextScores(map);
+  }
+
+  /**
+   *
+   */
+  private _defaultSearchResults(): ISearchResult[] {
+    //
+    let items = this._items.slice();
+
+    //
+    items.sort(Private.defaultItemCmp);
+
+    //
+    let map = Private.groupDefaultItems(items);
+
+    //
+    return Private.renderDefaultItems(map);
   }
 
   private _items: StandardPaletteItem[] = [];
@@ -343,9 +380,20 @@ namespace Private {
    *
    */
   export
-  interface IMatchItem {
-    item: StandardPaletteItem;
+  interface ITextScore {
+    /**
+     *
+     */
+    item: StandardPaletteItem
+
+    /**
+     *
+     */
     score: number;
+
+    /**
+     *
+     */
     indices: number[];
   }
 
@@ -353,62 +401,157 @@ namespace Private {
    *
    */
   export
-  function matchCategory(items: StandardPaletteItem[], category: string): StandardPaletteItem[] {
-    if (!category) return items;
-    let normed = category.toLowerCase();
-    return items.filter(item => item.category.toLowerCase() === normed);
+  type TextScoreMap = { [category: string]: ITextScore[] };
+
+  /**
+   *
+   */
+  export
+  type DefaultItemMap = { [category: string]: StandardPaletteItem[] };
+
+  /**
+   *
+   */
+  export
+  function normalizeCategory(category: string): string {
+    return category.trim().replace(/\s+/g, ' ').toLowerCase();
   }
 
   /**
    *
    */
   export
-  function matchText(items: StandardPaletteItem[], text: string): IMatchItem[] {
-    let matches: IMatchItem[] = [];
-    let query = text.replace(/\s/g, '').toLowerCase();
+  function normalizeSearchChars(text: string): string {
+    return text.replace(/\s+/g, '').toLowerCase();
+  }
+
+  /**
+   *
+   */
+  export
+  function textScoreCmp(a: ITextScore, b: ITextScore): number {
+    if (a.score !== b.score) return a.score - b.score;
+    return a.item.text.localeCompare(b.item.text);
+  }
+
+  /**
+   *
+   */
+  export
+  function defaultItemCmp(a: StandardPaletteItem, b: StandardPaletteItem): number {
+    if (a.category !== b.category) return a.category.localeCompare(b.category);
+    return a.text.localeCompare(b.text);
+  }
+
+  /**
+   *
+   */
+  export
+  function matchTextChars(items: StandardPaletteItem[], chars: string): ITextScore[] {
+    let scores: ITextScore[] = [];
     for (let item of items) {
-      let source = item.text.toLowerCase();
-      let match = StringSearch.sumOfSquares(source, query);
+      let text = item.text.toLowerCase();
+      let match = StringSearch.sumOfSquares(text, chars);
       if (!match) continue;
       let { score, indices } = match;
-      matches.push({ item, score: match.score, indices: match.indices });
+      scores.push({ item, score: match.score, indices: match.indices });
     }
-    return matches;
+    return scores;
   }
 
   /**
    *
    */
   export
-  function matchSort(a: IMatchItem, b: IMatchItem): number {
-    return a.score - b.score;
+  function groupTextScores(scores: ITextScore[]): TextScoreMap {
+    let result: TextScoreMap = Object.create(null);
+    for (let score of scores) {
+      let category = score.item.category;
+      let group = result[category];
+      if (group) {
+        group.push(score);
+      } else {
+        result[category] = [score];
+      }
+    }
+    return result;
   }
 
   /**
    *
    */
   export
-  function makeCommandResult(match: IMatchItem): ICommandResult {
-    let text = StringSearch.highlight(match.item.text, match.indices);
-    let { icon, caption, shortcut, className, handler, args } = match.item;
-    return { text, icon, caption, shortcut, className, handler, args };
-  }
-
-  export
-  interface IMatchGroups {
-    [category: string]: IMatchItem[];
-  }
-
-  /**
-   *
-   */
-  export
-  function groupCategories(items: IMatchItem[]): IMatchGroups {
-    let groups: IMatchGroups = Object.create(null);
+  function groupDefaultItems(items: StandardPaletteItem[]): DefaultItemMap {
+    let result: DefaultItemMap = Object.create(null);
     for (let item of items) {
-      let category = item.item.category;
-      (groups[category] || (groups[category] = [])).push(item);
+      let category = item.category;
+      let group = result[category];
+      if (group) {
+        group.push(item);
+      } else {
+        result[category] = [item];
+      }
     }
-    return groups;
+    return result;
+  }
+
+  /**
+   *
+   */
+  export
+  function renderTextScores(map: TextScoreMap): ISearchResult[] {
+    let result: ISearchResult[] = [];
+    for (let category in map) {
+      result.push(renderTextHeader(category));
+      for (let score of map[category]) {
+        result.push(renderTextScore(score));
+      }
+    }
+    return result;
+  }
+
+  /**
+   *
+   */
+  export
+  function renderDefaultItems(map: DefaultItemMap): ISearchResult[] {
+    let result: ISearchResult[] = [];
+    for (let category in map) {
+      result.push(renderTextHeader(category));
+      for (let item of map[category]) {
+        result.push(renderDefaultItem(item));
+      }
+    }
+    return result;
+  }
+
+  /**
+   *
+   */
+  function renderTextHeader(category: string): ISearchResult {
+    let type = SearchResultType.Header;
+    let value = { text: category, category }
+    return { type, value };
+  }
+
+  /**
+   *
+   */
+  function renderTextScore(score: ITextScore): ISearchResult {
+    let type = SearchResultType.Command;
+    let text = StringSearch.highlight(score.item.text, score.indices);
+    let { icon, caption, shortcut, className, handler, args } = score.item;
+    let value = { text, icon, caption, shortcut, className, handler, args };
+    return { type, value };
+  }
+
+  /**
+   *
+   */
+  function renderDefaultItem(item: StandardPaletteItem): ISearchResult {
+    let type = SearchResultType.Command;
+    let { text, icon, caption, shortcut, className, handler, args } = item;
+    let value = { text, icon, caption, shortcut, className, handler, args };
+    return { type, value };
   }
 }
