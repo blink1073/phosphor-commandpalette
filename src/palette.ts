@@ -62,32 +62,32 @@ const HEADER_TEXT_CLASS = 'p-CommandPalette-headerText';
 const HEADER_ICON_CLASS = 'p-CommandPalette-headerIcon';
 
 /**
- *
+ * The class name added to a palette item.
  */
 const ITEM_CLASS = 'p-CommandPalette-item';
 
 /**
- *
+ * The class name added to item the wrapper around item text (excludes icon).
  */
 const ITEM_CONTENT_CLASS = 'p-CommandPalette-itemContent';
 
 /**
- *
+ * The class name added to item icons.
  */
 const ITEM_ICON_CLASS = 'p-CommandPalette-itemIcon';
 
 /**
- *
+ * The class name added to item titles.
  */
 const ITEM_TEXT_CLASS = 'p-CommandPalette-itemText';
 
 /**
- *
+ * The class name added to item shortcuts.
  */
 const ITEM_SHORTCUT_CLASS = 'p-CommandPalette-itemShortcut';
 
 /**
- *
+ * The class name added to item captions.
  */
 const ITEM_CAPTION_CLASS = 'p-CommandPalette-itemCaption';
 
@@ -358,30 +358,22 @@ class CommandPalette extends Widget {
    *
    */
   protected onUpdateRequest(msg: Message): void {
-    //
+    // Empty the content node.
     let content = this.contentNode;
     content.textContent = '';
 
-    //
-    if (!this._model) {
-      return;
-    }
+    // Bail if there is no model.
+    if (!this._model) return;
 
-    //
+    // Keep a local buffer containing search results.
     let result = this._model.search(this.inputNode.value);
-
-    //
-    if (result.length === 0) {
-      return;
-    }
-
     this._buffer = result;
+    if (result.length === 0) return;
 
-    //
+    // Create a document fragment that will populate the content node.
     let fragment = document.createDocumentFragment();
     let ctor = this.constructor as typeof CommandPalette;
 
-    //
     for (let i = 0, n = result.length; i < n; ++i) {
       let node: HTMLElement;
       let { type, value } = result[i];
@@ -401,7 +393,6 @@ class CommandPalette extends Widget {
       fragment.appendChild(node);
     }
 
-    //
     content.appendChild(fragment);
   }
 
@@ -514,24 +505,32 @@ class CommandPalette extends Widget {
     let { altKey, ctrlKey, metaKey, keyCode } = event;
     // Ignore system keyboard shortcuts.
     if (altKey || ctrlKey || metaKey) return;
+    // Allow all normal (non-navigation) keystrokes to propagate.
     if (!FN_KEYS.hasOwnProperty(`${keyCode}`)) return;
-    // If escape key is pressed and nothing is active, allow propagation.
     if (keyCode === ESCAPE) {
-      let { category, text } = AbstractPaletteModel.splitQuery(this.inputNode.value);
-      event.preventDefault();
-      event.stopPropagation();
+      let inputValue = this.inputNode.value;
+      let { category, text } = AbstractPaletteModel.splitQuery(inputValue);
+      // If escape key is pressed and category exists, stop propagation.
       if (category) {
+        event.preventDefault();
+        event.stopPropagation();
+        // Remove the category and leave the search query intact.
         this.inputNode.value = text;
         this.inputNode.focus();
         this.update();
         return;
       }
+      // If escape key is pressed and text exists, stop propagation.
       if (text) {
+        event.preventDefault();
+        event.stopPropagation();
+        // Remove the search query, resetting the palette.
         this.inputNode.value = '';
         this.inputNode.focus();
         this.update();
         return;
       }
+      // If escape key is pressed and results in no search action, propagate.
       this._deactivate();
       this.inputNode.blur();
       return;
