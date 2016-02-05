@@ -404,6 +404,8 @@ class CommandPalette extends Widget {
     if (query.length) {
       let selector = `.${ITEM_CLASS}`;
       let target = this.contentNode.querySelector(selector) as HTMLElement;
+      // Scroll all the way to the top of the content node.
+      this.contentNode.scrollTop = 0;
       this._activateNode(target);
     }
   }
