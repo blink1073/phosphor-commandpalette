@@ -76,7 +76,7 @@ namespace StringSearch {
    * @param indices - The indices of the matched characters. They must
    *   appear in increasing order and must be in bounds of the source.
    *
-   * @returns A string with interpolated `<em>` tags.
+   * @returns A string with interpolated `<mark>` tags.
    */
   export
   function highlight(sourceText: string, indices: number[]): string {
@@ -90,7 +90,7 @@ namespace StringSearch {
       while (++k < n && indices[k] === j + 1) j++;
       let head = sourceText.slice(last, i);
       let chunk = sourceText.slice(i, j + 1);
-      result += `${head}<em>${chunk}</em>`;
+      result += `${head}<mark>${chunk}</mark>`;
       last = j + 1;
     }
     return result + sourceText.slice(last);
