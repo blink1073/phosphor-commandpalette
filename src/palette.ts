@@ -565,8 +565,12 @@ class CommandPalette extends Widget {
     }
     event.preventDefault();
     event.stopPropagation();
-    if (keyCode === UP_ARROW) return this._activate(ScrollDirection.Up);
-    if (keyCode === DOWN_ARROW) return this._activate(ScrollDirection.Down);
+    if (keyCode === UP_ARROW) {
+      return this._activate(ScrollDirection.Up);
+    }
+    if (keyCode === DOWN_ARROW) {
+      return this._activate(ScrollDirection.Down);
+    }
     if (keyCode === ENTER) {
       let active = this._findActiveNode();
       if (!active) {
