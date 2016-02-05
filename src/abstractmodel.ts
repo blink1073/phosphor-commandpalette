@@ -36,6 +36,10 @@ export
 interface IHeaderResult {
   /**
    * The title text for the header.
+   *
+   * #### Notes
+   * The text may include markup to highlight matched characters.
+   * This feature *should not* be abused for arbitrary rendering.
    */
   text: string;
 
@@ -43,18 +47,10 @@ interface IHeaderResult {
    * A category to further refine the search, or an empty string.
    *
    * #### Notes
-   * If this is provided, the header will be selectable. If the header
-   * is selected, the search will be refined with the given category.
+   * If the header is selected, the search will be refined with the
+   * given category.
    */
   category: string;
-
-  /**
-   * The class name(s) to add to the header node, or an empty string.
-   *
-   * #### Notes
-   * Multiple class names should be separated by whitespace.
-   */
-  className: string;
 }
 
 
