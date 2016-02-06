@@ -85,6 +85,9 @@ interface IStandardPaletteItemOptions {
    *
    * #### Notes
    * This is used to group multiple items with the same category.
+   *
+   * The category will be normalized by removing extraneous white
+   * space and converting it to lower case.
    */
   category?: string;
 }
