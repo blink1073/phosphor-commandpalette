@@ -310,94 +310,35 @@ class StandardPaletteModel extends AbstractPaletteModel {
    * @returns An array of new search results for the query.
    */
   search(query: string): ISearchResult[] {
-    //
-    type StringMap<T> = { [key: string]: T };
-
-    //
+    // Split the query into the category and text components.
     let { category, text } = AbstractPaletteModel.splitQuery(query);
 
-    //
-    let catQuery = Private.normalizeQueryText(category);
-    let seenCats: StringMap<boolean> = Object.create(null);
-    let matchCats: StringMap<number[]> = Object.create(null);
+    // Collect a mapping of the matching categories. The mapping will
+    // only contain categories which match the provided query text.
+    // If the category is an empty string, all categories will be
+    // matched with a score of `0` and a `null` indices array.
+    let catmap = Private.matchCategory(this._items, category);
 
-    //
-    for (let item of this._items) {
-      //
-      if (item.category in seenCats) {
-        continue;
-      }
+    // Filter the items for matching text. Only items which have a
+    // category in the given map are considered. The category score
+    // is added to the text score to create the final item score.
+    // If the text is an empty string, all items will be matched
+    // will a text score of `0` and `null` indices array.
+    let scores = Private.matchText(this._items, text, catmap);
 
-      //
-      seenCats[item.category] = true;
-
-      //
-      if (!catQuery) {
-        matchCats[item.category] = null;
-        continue;
-      }
-
-      //
-      let match = StringSearch.sumOfSquares(item.category, catQuery);
-      if (match) matchCats[item.category] = match.indices;
-    }
-
-    //
-    let txtQuery = Private.normalizeCategory(text);
-    let scores: Private.IItemScore[] = [];
-
-    //
-    for (let item of this._items) {
-      //
-      if (!(item.category in matchCats)) {
-        continue;
-      }
-
-      //
-      if (!txtQuery) {
-        scores.push({ item, score: 0, indices: null });
-        continue;
-      }
-
-      //
-      let match = StringSearch.sumOfSquares(item.text.toLowerCase(), txtQuery);
-      if (!match) {
-        continue;
-      }
-
-      //
-      scores.push({ item, score: match.score, indices: match.indices });
-    }
-
-    //
+    // Sort the items based on their total item score. Ties are
+    // broken by locale ordering the category followed by the text.
     scores.sort(Private.scoreCmp);
 
-    //
-    let groups: StringMap<Private.IItemScore[]> = Object.create(null);
+    // Group the item scores by category. The categories are added
+    // to the map in the order they appear in the scores array.
+    let groups = Private.groupScores(scores);
 
-    //
-    for (let score of scores) {
-      let cat = score.item.category;
-      let group = groups[cat];
-      if (group) {
-        group.push(score);
-      } else {
-        groups[cat] = [score];
-      }
-    }
-
-    //
-    let results: ISearchResult[] = [];
-
-    //
-    for (let cat in groups) {
-      results.push(Private.renderHeader(cat, matchCats[cat]));
-      for (let score of groups[cat]) {
-        results.push(Private.renderScore(score));
-      }
-    }
-
-    return results;
+    // Return the results for the search. The headers are created in
+    // the order of key iteration of the map. On major browsers, this
+    // is insertion order. This means that headers are created in the
+    // order of first appearance in the sorted scores array.
+    return Private.createSearchResults(groups, catmap);
   }
 
   private _items: StandardPaletteItem[] = [];
@@ -405,32 +346,52 @@ class StandardPaletteModel extends AbstractPaletteModel {
 
 
 /**
- *
+ * The namespace for the `StandardPaletteModel` private data.
  */
 namespace Private {
   /**
-   *
+   * A type alias for a string map object.
    */
   export
-  interface IItemScore {
-    /**
-     *
-     */
-    item: StandardPaletteItem
+  type StringMap<T> = { [key: string]: T };
 
+  /**
+   * An object which represents a text match score.
+   */
+  export
+  interface IScore {
     /**
-     *
+     * The numerical score for the text match.
      */
     score: number;
 
     /**
-     *
+     * The indices of the matched characters.
      */
     indices: number[];
   }
 
   /**
+   * A text match score with associated palette item.
+   */
+  export
+  interface IItemScore extends IScore {
+    /**
+     * The palette item associated with the match.
+     */
+    item: StandardPaletteItem;
+  }
+
+  /**
+   * Normalize a category for a palette item.
    *
+   * @param category - The item category to normalize.
+   *
+   * @returns The normalized category text.
+   *
+   * #### Notes
+   * This converts the category to lower case and removes any
+   * extraneous whitespace.
    */
   export
   function normalizeCategory(category: string): string {
@@ -438,54 +399,240 @@ namespace Private {
   }
 
   /**
+   * Collect a mapping of the categories which match the given query.
    *
+   * @param items - The palette items to search.
+   *
+   * @param query - The category portion of the palette model query.
+   *
+   * @returns A mapping of matched category to match score.
+   *
+   * #### Notes
+   * The query string will be normalized by lower casing and removing
+   * all whitespace. If the normalized query is an empty string, all
+   * categories will be matched with a `0` score and `null` indices.
    */
   export
+  function matchCategory(items: StandardPaletteItem[], query: string): StringMap<IScore> {
+    // Normalize the query text to lower case with no whitespace.
+    query = normalizeQueryText(query);
+
+    // Create the maps needed to track the match state.
+    let seen: StringMap<boolean> = Object.create(null);
+    let matched: StringMap<IScore> = Object.create(null);
+
+    // Iterate over the items and match the categories.
+    for (let { category } of items) {
+      // If a category has already been seen, no more work is needed.
+      if (category in seen) {
+        continue;
+      }
+
+      // Mark the category as seen so it is only processed once.
+      seen[category] = true;
+
+      // If the query is empty, all categories match by default.
+      if (!query) {
+        matched[category] = { score: 0, indices: null };
+        continue;
+      }
+
+      // Run the matcher for the query and skip if no match.
+      let match = StringSearch.sumOfSquares(category, query);
+      if (!match) {
+        continue;
+      }
+
+      // Store the match score in the results.
+      matched[category] = match;
+    }
+
+    // Return the final mapping of matched categories.
+    return matched;
+  }
+
+  /**
+   * Filter palette items for those with matching text and category.
+   *
+   * @param items - The palette items to search.
+   *
+   * @param query - The text portion of the palette model query.
+   *
+   * @param categories - A mapping of the valid item categories.
+   *
+   * @returns An array of item scores for the matching items.
+   *
+   * #### Notes
+   * The query string will be normalized by lower casing and removing
+   * all whitespace. If the normalized query is an empty string, all
+   * items will be matched with a `0` text score and `null` indices.
+   *
+   * Items which have a category which is not present in the category
+   * map will be ignored.
+   *
+   * The final item score is the sum of the item text score and the
+   * relevant category score.
+   *
+   * This function does not sort the results.
+   */
+  export
+  function matchText(items: StandardPaletteItem[], query: string, categories: StringMap<IScore>): IItemScore[] {
+    // Normalize the query text to lower case with no whitespace.
+    query = normalizeQueryText(query);
+
+    // Create the array to hold the resulting scores.
+    let scores: IItemScore[] = [];
+
+    // Iterate over the items and match the text with the query.
+    for (let item of items) {
+      // Lookup the category score for the item category.
+      let cs = categories[item.category];
+
+      // If the category was not matched, the item is skipped.
+      if (!cs) {
+        continue;
+      }
+
+      // If the query is empty, all items are matched by default.
+      if (!query) {
+        scores.push({ score: cs.score, indices: null, item });
+        continue;
+      }
+
+      // Run the matcher for the query and skip if no match.
+      let match = StringSearch.sumOfSquares(item.text.toLowerCase(), query);
+      if (!match) {
+        continue;
+      }
+
+      // Create the match score for the item.
+      let score = cs.score + match.score;
+      scores.push({ score, indices: match.indices, item });
+    }
+
+    // Return the final array of matched item scores.
+    return scores;
+  }
+
+  /**
+   * A sort comparison function for a palette item match score.
+   *
+   * #### Notes
+   * This orders the items first based on score (lower is better), then
+   * by locale order of the item category followed by the item text.
+   */
+  export
+  function scoreCmp(a: IItemScore, b: IItemScore): number {
+    let d1 = a.score - b.score;
+    if (d1 !== 0) {
+      return d1;
+    }
+    let d2 = a.item.category.localeCompare(b.item.category);
+    if (d2 !== 0) {
+      return d2;
+    }
+    return a.item.text.localeCompare(b.item.text);
+  }
+
+  /**
+   * Group item scores by item category.
+   *
+   * @param scores - The items to group by category.
+   *
+   * @returns A mapping of category name to group of items.
+   *
+   * #### Notes
+   * The categories are added to the map in the order of first
+   * appearance in the `scores` array.
+   */
+  export
+  function groupScores(scores: IItemScore[]): StringMap<IItemScore[]> {
+    let result: StringMap<IItemScore[]> = Object.create(null);
+    for (let score of scores) {
+      let cat = score.item.category;
+      (result[cat] || (result[cat] = [])).push(score);
+    }
+    return result;
+  }
+
+  /**
+   * Create the search results for a collection of item scores.
+   *
+   * @param groups - The item scores, grouped by category.
+   *
+   * @param categories - A mapping of category scores.
+   *
+   * @returns A flat array of search results for the groups.
+   *
+   * #### Notes
+   * This function renders the groups in iteration order, which on all
+   * major browsers is order of insertion (a de facto standard).
+   */
+  export
+  function createSearchResults(groups: StringMap<IItemScore[]>, categories: StringMap<IScore>): ISearchResult[] {
+    let results: ISearchResult[] = [];
+    for (let cat in groups) {
+      results.push(createHeaderResult(cat, categories[cat]));
+      for (let score of groups[cat]) {
+        results.push(createCommandResult(score));
+      }
+    }
+    return results;
+  }
+
+  /**
+   * Normalize the query text for a palette item.
+   *
+   * @param text - The category or text portion of a palette query.
+   *
+   * @returns The normalized query text.
+   *
+   * #### Notes
+   * The text is normalized by converting to lower case and removing
+   * all whitespace.
+   */
   function normalizeQueryText(text: string): string {
     return text.replace(/\s+/g, '').toLowerCase();
   }
 
   /**
+   * Create a header search result for the given data.
    *
+   * @param category - The category name for the header.
+   *
+   * @param score - The score for the category match.
+   *
+   * @returns A header search result for the given data.
    */
-  export
-  function scoreCmp(a: IItemScore, b: IItemScore): number {
-    //
-    let ds = a.score - b.score;
-    if (ds !== 0) {
-      return ds;
-    }
-
-    //
-    let cs = a.item.category.localeCompare(b.item.category);
-    if (cs !== 0) {
-      return cs;
-    }
-
-    //
-    return a.item.text.localeCompare(b.item.text);
+  function createHeaderResult(category: string, score: IScore): ISearchResult {
+    let text = highlightText(category, score.indices);
+    return { type: SearchResultType.Header, value: { text, category } };
   }
 
   /**
+   * Create a command search result for the given data.
    *
-   */
-  export
-  function renderHeader(category: string, indices: number[]): ISearchResult {
-    let type = SearchResultType.Header;
-    let text = indices ? StringSearch.highlight(category, indices) : category;
-    let value = { text, category };
-    return { type, value };
-  }
-
-  /**
+   * @param score - The score for the item match.
    *
+   * @returns A command search result for the given data.
    */
-  export
-  function renderScore(score: IItemScore): ISearchResult {
-    let type = SearchResultType.Command;
-    let text = score.indices ? StringSearch.highlight(score.item.text, score.indices) : score.item.text;
+  function createCommandResult(score: IItemScore): ISearchResult {
+    let text = highlightText(score.item.text, score.indices);
     let { icon, caption, shortcut, className, handler, args } = score.item;
     let value = { text, icon, caption, shortcut, className, handler, args };
-    return { type, value };
+    return { type: SearchResultType.Command, value };
+  }
+
+  /**
+   * Highlight the matching character of the given text.
+   *
+   * @param text - The text to highlight.
+   *
+   * @param indices - The character indices to highlight, or `null`.
+   *
+   * @returns The text interpolated with `<mark>` tags as needed.
+   */
+  function highlightText(text: string, indices: number[]): string {
+    return indices ? StringSearch.highlight(text, indices) : text;
   }
 }
