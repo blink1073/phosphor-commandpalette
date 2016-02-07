@@ -311,64 +311,93 @@ class StandardPaletteModel extends AbstractPaletteModel {
    */
   search(query: string): ISearchResult[] {
     //
+    type StringMap<T> = { [key: string]: T };
+
+    //
     let { category, text } = AbstractPaletteModel.splitQuery(query);
 
     //
-    if (category) {
-      return this._searchByCategory(category, text);
+    let catQuery = Private.normalizeQueryText(category);
+    let seenCats: StringMap<boolean> = Object.create(null);
+    let matchCats: StringMap<number[]> = Object.create(null);
+
+    //
+    for (let item of this._items) {
+      //
+      if (item.category in seenCats) {
+        continue;
+      }
+
+      //
+      seenCats[item.category] = true;
+
+      //
+      if (!catQuery) {
+        matchCats[item.category] = null;
+        continue;
+      }
+
+      //
+      let match = StringSearch.sumOfSquares(item.category, catQuery);
+      if (match) matchCats[item.category] = match.indices;
     }
 
     //
-    if (text) {
-      return this._searchByText(text);
+    let txtQuery = Private.normalizeCategory(text);
+    let scores: Private.IItemScore[] = [];
+
+    //
+    for (let item of this._items) {
+      //
+      if (!(item.category in matchCats)) {
+        continue;
+      }
+
+      //
+      if (!txtQuery) {
+        scores.push({ item, score: 0, indices: null });
+        continue;
+      }
+
+      //
+      let match = StringSearch.sumOfSquares(item.text.toLowerCase(), txtQuery);
+      if (!match) {
+        continue;
+      }
+
+      //
+      scores.push({ item, score: match.score, indices: match.indices });
     }
 
     //
-    return this._defaultSearchResults();
-  }
-
-  /**
-   *
-   */
-  private _searchByCategory(category: string, text: string): ISearchResult[] {
-    return [];
-  }
-
-  /**
-   *
-   */
-  private _searchByText(text: string): ISearchResult[] {
-    //
-    let chars = Private.normalizeSearchChars(text);
+    scores.sort(Private.scoreCmp);
 
     //
-    let scores = Private.matchTextChars(this._items, chars);
+    let groups: StringMap<Private.IItemScore[]> = Object.create(null);
 
     //
-    scores.sort(Private.textScoreCmp);
+    for (let score of scores) {
+      let cat = score.item.category;
+      let group = groups[cat];
+      if (group) {
+        group.push(score);
+      } else {
+        groups[cat] = [score];
+      }
+    }
 
     //
-    let map = Private.groupTextScores(scores);
+    let results: ISearchResult[] = [];
 
     //
-    return Private.renderTextScores(map);
-  }
+    for (let cat in groups) {
+      results.push(Private.renderHeader(cat, matchCats[cat]));
+      for (let score of groups[cat]) {
+        results.push(Private.renderScore(score));
+      }
+    }
 
-  /**
-   *
-   */
-  private _defaultSearchResults(): ISearchResult[] {
-    //
-    let items = this._items.slice();
-
-    //
-    items.sort(Private.defaultItemCmp);
-
-    //
-    let map = Private.groupDefaultItems(items);
-
-    //
-    return Private.renderDefaultItems(map);
+    return results;
   }
 
   private _items: StandardPaletteItem[] = [];
@@ -383,7 +412,7 @@ namespace Private {
    *
    */
   export
-  interface ITextScore {
+  interface IItemScore {
     /**
      *
      */
@@ -404,18 +433,6 @@ namespace Private {
    *
    */
   export
-  type TextScoreMap = { [category: string]: ITextScore[] };
-
-  /**
-   *
-   */
-  export
-  type DefaultItemMap = { [category: string]: StandardPaletteItem[] };
-
-  /**
-   *
-   */
-  export
   function normalizeCategory(category: string): string {
     return category.trim().replace(/\s+/g, ' ').toLowerCase();
   }
@@ -424,7 +441,7 @@ namespace Private {
    *
    */
   export
-  function normalizeSearchChars(text: string): string {
+  function normalizeQueryText(text: string): string {
     return text.replace(/\s+/g, '').toLowerCase();
   }
 
@@ -432,8 +449,20 @@ namespace Private {
    *
    */
   export
-  function textScoreCmp(a: ITextScore, b: ITextScore): number {
-    if (a.score !== b.score) return a.score - b.score;
+  function scoreCmp(a: IItemScore, b: IItemScore): number {
+    //
+    let ds = a.score - b.score;
+    if (ds !== 0) {
+      return ds;
+    }
+
+    //
+    let cs = a.item.category.localeCompare(b.item.category);
+    if (cs !== 0) {
+      return cs;
+    }
+
+    //
     return a.item.text.localeCompare(b.item.text);
   }
 
@@ -441,119 +470,21 @@ namespace Private {
    *
    */
   export
-  function defaultItemCmp(a: StandardPaletteItem, b: StandardPaletteItem): number {
-    if (a.category !== b.category) return a.category.localeCompare(b.category);
-    return a.text.localeCompare(b.text);
-  }
-
-  /**
-   *
-   */
-  export
-  function matchTextChars(items: StandardPaletteItem[], chars: string): ITextScore[] {
-    let scores: ITextScore[] = [];
-    for (let item of items) {
-      let text = item.text.toLowerCase();
-      let match = StringSearch.sumOfSquares(text, chars);
-      if (!match) continue;
-      let { score, indices } = match;
-      scores.push({ item, score: match.score, indices: match.indices });
-    }
-    return scores;
-  }
-
-  /**
-   *
-   */
-  export
-  function groupTextScores(scores: ITextScore[]): TextScoreMap {
-    let result: TextScoreMap = Object.create(null);
-    for (let score of scores) {
-      let category = score.item.category;
-      let group = result[category];
-      if (group) {
-        group.push(score);
-      } else {
-        result[category] = [score];
-      }
-    }
-    return result;
-  }
-
-  /**
-   *
-   */
-  export
-  function groupDefaultItems(items: StandardPaletteItem[]): DefaultItemMap {
-    let result: DefaultItemMap = Object.create(null);
-    for (let item of items) {
-      let category = item.category;
-      let group = result[category];
-      if (group) {
-        group.push(item);
-      } else {
-        result[category] = [item];
-      }
-    }
-    return result;
-  }
-
-  /**
-   *
-   */
-  export
-  function renderTextScores(map: TextScoreMap): ISearchResult[] {
-    let result: ISearchResult[] = [];
-    for (let category in map) {
-      result.push(renderTextHeader(category));
-      for (let score of map[category]) {
-        result.push(renderTextScore(score));
-      }
-    }
-    return result;
-  }
-
-  /**
-   *
-   */
-  export
-  function renderDefaultItems(map: DefaultItemMap): ISearchResult[] {
-    let result: ISearchResult[] = [];
-    for (let category in map) {
-      result.push(renderTextHeader(category));
-      for (let item of map[category]) {
-        result.push(renderDefaultItem(item));
-      }
-    }
-    return result;
-  }
-
-  /**
-   *
-   */
-  function renderTextHeader(category: string): ISearchResult {
+  function renderHeader(category: string, indices: number[]): ISearchResult {
     let type = SearchResultType.Header;
-    let value = { text: category, category }
+    let text = indices ? StringSearch.highlight(category, indices) : category;
+    let value = { text, category };
     return { type, value };
   }
 
   /**
    *
    */
-  function renderTextScore(score: ITextScore): ISearchResult {
+  export
+  function renderScore(score: IItemScore): ISearchResult {
     let type = SearchResultType.Command;
-    let text = StringSearch.highlight(score.item.text, score.indices);
+    let text = score.indices ? StringSearch.highlight(score.item.text, score.indices) : score.item.text;
     let { icon, caption, shortcut, className, handler, args } = score.item;
-    let value = { text, icon, caption, shortcut, className, handler, args };
-    return { type, value };
-  }
-
-  /**
-   *
-   */
-  function renderDefaultItem(item: StandardPaletteItem): ISearchResult {
-    let type = SearchResultType.Command;
-    let { text, icon, caption, shortcut, className, handler, args } = item;
     let value = { text, icon, caption, shortcut, className, handler, args };
     return { type, value };
   }
