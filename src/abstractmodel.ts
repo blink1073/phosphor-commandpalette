@@ -137,24 +137,6 @@ interface ISearchResult {
 export
 abstract class AbstractPaletteModel {
   /**
-   *
-   */
-  static splitQuery(query: string): { category: string, text: string } {
-    let i = query.indexOf(':');
-    if (i === -1) return { category: '', text: query.trim() };
-    let category = query.slice(0, i).trim();
-    let text = query.slice(i + 1).trim();
-    return { category, text };
-  }
-
-  /**
-   *
-   */
-  static joinQuery(category: string, text: string): string {
-    return `${category.trim()}: ${text.trim()}`;
-  }
-
-  /**
    * Search the palette model for matching commands.
    *
    * @param query - The query text to match against the model items.
@@ -182,6 +164,60 @@ abstract class AbstractPaletteModel {
    */
   get changed(): ISignal<AbstractPaletteModel, void> {
     return AbstractPaletteModelPrivate.changedSignal.bind(this);
+  }
+}
+
+
+/**
+ * The namespace for the `AbstractPaletteModel` class statics.
+ */
+export
+namespace AbstractPaletteModel {
+  /**
+   * Split a query string into its category and text components.
+   *
+   * @param query - A query string of the form `(<category>:)?<text>`.
+   *
+   * @returns The `category` and `text` components of the query with
+   *   leading and trailing whitespace removed.
+   */
+  export
+  function splitQuery(query: string): { category: string, text: string } {
+    let text: string;
+    let category: string;
+    let i = query.indexOf(':');
+    if (i === -1) {
+      category = '';
+      text = query.trim();
+    } else {
+      category = query.slice(0, i).trim();
+      text = query.slice(i + 1).trim();
+    }
+    return { category, text };
+  }
+
+  /**
+   * Join category and text components into a query string.
+   *
+   * @param category - The category for the query or `''`.
+   *
+   * @param text - The text for the query or `''`.
+   *
+   * @returns The joined query string for the components.
+   */
+  export
+  function joinQuery(category: string, text: string): string {
+    let query: string;
+    if (category && text) {
+      query = `${category.trim()}: ${text.trim()}`;
+    } else if (category) {
+      query = `${category.trim()}: `;
+    } else if (text) {
+      query = text.trim();
+    } else {
+      query = '';
+    }
+    return query;
   }
 }
 

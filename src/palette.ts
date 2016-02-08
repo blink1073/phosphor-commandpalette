@@ -188,7 +188,7 @@ class CommandPalette extends Widget {
     node.className = HEADER_CLASS;
     text.className = HEADER_TEXT_CLASS;
     icon.className = HEADER_ICON_CLASS;
-    text.textContent = data.text;
+    text.innerHTML = data.text;
     node.appendChild(text);
     node.appendChild(icon);
     return node;
