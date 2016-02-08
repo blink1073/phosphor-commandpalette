@@ -176,23 +176,23 @@ namespace AbstractPaletteModel {
   /**
    * Split a query string into its category and text components.
    *
-   * @param query - A query string of the form `(<category>:)?<text>`.
+   * @param query - A query string of the form `(:<category>:)?<text>`.
    *
    * @returns The `category` and `text` components of the query with
    *   leading and trailing whitespace removed.
    */
   export
   function splitQuery(query: string): { category: string, text: string } {
-    let text: string;
-    let category: string;
-    let i = query.indexOf(':');
-    if (i === -1) {
-      category = '';
-      text = query.trim();
-    } else {
-      category = query.slice(0, i).trim();
-      text = query.slice(i + 1).trim();
+    query = query.trim();
+    if (query[0] !== ':') {
+      return { category: '', text: query };
     }
+    let i = query.indexOf(':', 1);
+    if (i === -1) {
+      return { category: query.slice(1), text: '' };
+    }
+    let category = query.slice(1, i).trim();
+    let text = query.slice(i + 1).trim();
     return { category, text };
   }
 
@@ -209,9 +209,9 @@ namespace AbstractPaletteModel {
   function joinQuery(category: string, text: string): string {
     let query: string;
     if (category && text) {
-      query = `${category.trim()}: ${text.trim()}`;
+      query = `:${category.trim()}: ${text.trim()}`;
     } else if (category) {
-      query = `${category.trim()}: `;
+      query = `:${category.trim()}: `;
     } else if (text) {
       query = text.trim();
     } else {

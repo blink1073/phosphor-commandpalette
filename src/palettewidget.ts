@@ -600,7 +600,8 @@ class CommandPalette extends Widget {
     case SearchResultType.Header:
       let { category } = value as IHeaderResult;
       let { text } = AbstractPaletteModel.splitQuery(this.inputNode.value);
-      this.inputNode.value = `${category.trim()}: ${text}`;
+      let query = AbstractPaletteModel.joinQuery(category.trim(), text);
+      this.inputNode.value = query;
       this.inputNode.focus();
       this.update();
       break;
