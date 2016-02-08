@@ -272,10 +272,10 @@ class CommandPalette extends Widget {
       return;
     }
     if (this._model) {
-      this._model.changed.disconnect(this._onModelChanged);
+      this._model.changed.disconnect(this._onModelChanged, this);
     }
     if (value) {
-      value.changed.connect(this._onModelChanged);
+      value.changed.connect(this._onModelChanged, this);
     }
     this._model = value;
     this.update();
