@@ -530,7 +530,7 @@ class CommandPalette extends Widget {
   private _evtKeyDown(event: KeyboardEvent): void {
     let { altKey, ctrlKey, metaKey, shiftKey, keyCode } = event;
     // Ignore system keyboard shortcuts.
-    if (altKey || ctrlKey || metaKey, shiftKey) {
+    if (altKey || ctrlKey || metaKey || shiftKey) {
       return;
     }
     // Allow all normal (non-navigation) keystrokes to propagate.
