@@ -626,7 +626,7 @@ class CommandPalette extends Widget {
    *
    */
   private _onModelChanged(): void {
-
+    this.update();
   }
 
   private _buffer: ISearchResult[];
