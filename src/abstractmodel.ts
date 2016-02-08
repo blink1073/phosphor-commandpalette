@@ -189,7 +189,7 @@ namespace AbstractPaletteModel {
     }
     let i = query.indexOf(':', 1);
     if (i === -1) {
-      return { category: query.slice(1), text: '' };
+      return { category: query.slice(1).trim(), text: '' };
     }
     let category = query.slice(1, i).trim();
     let text = query.slice(i + 1).trim();
