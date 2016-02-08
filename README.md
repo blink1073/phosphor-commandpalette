@@ -4,7 +4,7 @@ phosphor-commandpalette
 [![Build Status](https://travis-ci.org/phosphorjs/phosphor-commandpalette.svg)](https://travis-ci.org/phosphorjs/phosphor-commandpalette?branch=master)
 [![Coverage Status](https://coveralls.io/repos/phosphorjs/phosphor-commandpalette/badge.svg?branch=master&service=github)](https://coveralls.io/github/phosphorjs/phosphor-commandpalette?branch=master)
 
-A Phosphor widget which displays a searchable collection of commands
+A Phosphor widget which displays a searchable collection of commands.
 
 [API Docs](http://phosphorjs.github.io/phosphor-commandpalette/api/)
 
