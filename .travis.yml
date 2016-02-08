@@ -7,6 +7,7 @@ env:
     - GROUP=
   global:
     - GHREPO=github.com/phosphorjs/phosphor-commandpalette
+    - secure: JM90UuhRshs5wXK9+fanJhQndOsPtE4svdMYt3ps72yf8ZPwAHFyREcluZjnqYTxxwk2D59yiTTxS3B+k7T90cKFZZJb4rLAjHVzwgVXTMR5ZCRJXM19c6+EWRqZL2uw2FiL2sS5mwKcl2UnT7nL6CnPW/PIr9sLbl4rTwtLygZqWb/h3CifwsqoohwkK31jbICZQhxssfqulILWCcwswRT2WklVaiWYspSStoq/qPDthhZ23WLDHsx7Y+zNLmEpLJ92FzLI86b/tZkUvDwijsQu+QZ7JTGOkXoKU0bZuoYMwOA5XUbxlJ6cdFwHDiYmpK0kVabQ5SZPWTuk/V9u0qlx/3R31T1AIY5z1yfdYD+6LUHDS+hNTf8pw2pZYxovEvExbIZDqPoMJZWM5DF98/7N6IXe7ID6tlWzDQS/NKdXZT0upjGHQDdzSsjSYJY3WAk2w+MeHYiqz/HnNno35K4HEmrd/Pub838qOseaWdzvcXYA6pj/aekwK8ygoNFIz6ROUJ8DqmSQ2+E8hOpos6ftHHz+HRq5brJef+8cBdvAqMRdjvJYwPD+Rl+avBo8XI8Oml5/OprJvKUIHg7XVhjtexpqaSEDvdK5yF5p4K1XhsD0giYco6mc6bmdGY6WNRfxGnSuicNvcfagGhFVwXktYXB/s2W5HmeuQDZcvsU=
 install:
   - bash ./scripts/travis_install.sh
 script:
