@@ -368,10 +368,13 @@ class CommandPalette extends Widget {
     }
 
     // Keep a local buffer containing search results.
-    let query = this.inputNode.value;
-    let result = this._model.search(query);
-    this._buffer = result;
-    if (result.length === 0) {
+    let { category, text } = Private.splitQuery(this.inputNode.value);
+
+    //
+    let results = this._buffer = this._model.search(category, text);
+
+    //
+    if (results.length === 0) {
       return;
     }
 
@@ -401,7 +404,7 @@ class CommandPalette extends Widget {
     content.appendChild(fragment);
 
     // If the results were from a search, highlight the first item.
-    if (query.length) {
+    if (category || text) {
       let selector = `.${ITEM_CLASS}`;
       let target = this.contentNode.querySelector(selector) as HTMLElement;
       this._activateNode(target);
@@ -437,7 +440,7 @@ class CommandPalette extends Widget {
       return this._activateFirst();
     }
     let target = nodes[newActive] as HTMLElement;
-    let scrollIntoView = scrollTest(this.contentNode, target);
+    let scrollIntoView = Private.scrollTest(this.contentNode, target);
     let alignToTop = direction === ScrollDirection.Up;
     this._activateNode(target, scrollIntoView, alignToTop);
   }
@@ -453,7 +456,7 @@ class CommandPalette extends Widget {
       this.contentNode.scrollTop = 0;
       let target = nodes[0] as HTMLElement;
       // Test if the first item is visible.
-      let scrollIntoView = scrollTest(this.contentNode, target);
+      let scrollIntoView = Private.scrollTest(this.contentNode, target);
       this._activateNode(target, scrollIntoView, true);
     }
   }
@@ -469,7 +472,7 @@ class CommandPalette extends Widget {
       this.contentNode.scrollTop = this.contentNode.scrollHeight;
       let target = nodes[nodes.length - 1] as HTMLElement;
       // Test if the last item is visible.
-      let scrollIntoView = scrollTest(this.contentNode, target);
+      let scrollIntoView = Private.scrollTest(this.contentNode, target);
       this._activateNode(target, scrollIntoView, false);
     }
   }
@@ -539,7 +542,7 @@ class CommandPalette extends Widget {
     }
     if (keyCode === ESCAPE) {
       let inputValue = this.inputNode.value;
-      let { category, text } = AbstractPaletteModel.splitQuery(inputValue);
+      let { category, text } = Private.splitQuery(inputValue);
       // If escape key is pressed and category exists, stop propagation.
       if (category) {
         event.preventDefault();
@@ -599,8 +602,8 @@ class CommandPalette extends Widget {
     switch (type) {
     case SearchResultType.Header:
       let { category } = value as IHeaderResult;
-      let { text } = AbstractPaletteModel.splitQuery(this.inputNode.value);
-      let query = AbstractPaletteModel.joinQuery(category.trim(), text);
+      let { text } = Private.splitQuery(this.inputNode.value);
+      let query = Private.joinQuery(category.trim(), text);
       this.inputNode.value = query;
       this.inputNode.focus();
       this.update();
@@ -635,16 +638,69 @@ class CommandPalette extends Widget {
 
 
 /**
- * Test to see if a child node needs to be scrolled to within its parent node.
- *
- * @param parentNode - The element containing the child being checked.
- *
- * @param childNode - The child element whose visibility is being checked.
- *
- * @returns true if the parent node needs to be scrolled to reveal the child.
+ * The namespace for the `CommandPalette` private data.
  */
-function scrollTest(parentNode: HTMLElement, childNode: HTMLElement): boolean {
-  let parent = parentNode.getBoundingClientRect();
-  let child = childNode.getBoundingClientRect();
-  return child.top < parent.top || child.top + child.height > parent.bottom;
+namespace Private {
+  /**
+   * Split a query string into its category and text components.
+   *
+   * @param query - A query string of the form `(:<category>:)?<text>`.
+   *
+   * @returns The `category` and `text` components of the query with
+   *   leading and trailing whitespace removed.
+   */
+  export
+  function splitQuery(query: string): { category: string, text: string } {
+    query = query.trim();
+    if (query[0] !== ':') {
+      return { category: '', text: query };
+    }
+    let i = query.indexOf(':', 1);
+    if (i === -1) {
+      return { category: query.slice(1).trim(), text: '' };
+    }
+    let category = query.slice(1, i).trim();
+    let text = query.slice(i + 1).trim();
+    return { category, text };
+  }
+
+  /**
+   * Join category and text components into a query string.
+   *
+   * @param category - The category for the query or `''`.
+   *
+   * @param text - The text for the query or `''`.
+   *
+   * @returns The joined query string for the components.
+   */
+  export
+  function joinQuery(category: string, text: string): string {
+    let query: string;
+    if (category && text) {
+      query = `:${category.trim()}: ${text.trim()}`;
+    } else if (category) {
+      query = `:${category.trim()}: `;
+    } else if (text) {
+      query = text.trim();
+    } else {
+      query = '';
+    }
+    return query;
+  }
+
+  /**
+   * Test to see if a child node needs to be scrolled to within its parent node.
+   *
+   * @param parentNode - The element containing the child being checked.
+   *
+   * @param childNode - The child element whose visibility is being checked.
+   *
+   * @returns true if the parent node needs to be scrolled to reveal the child.
+   */
+  export
+  function scrollTest(parentNode: HTMLElement, childNode: HTMLElement): boolean {
+    let parent = parentNode.getBoundingClientRect();
+    let child = childNode.getBoundingClientRect();
+    return child.top < parent.top || child.top + child.height > parent.bottom;
+  }
 }
