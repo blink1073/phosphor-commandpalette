@@ -26,6 +26,13 @@
 }
 
 
+.p-CommandPalette-header {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+
 .p-CommandPalette-item {
   display: flex;
   flex-direction: row;
